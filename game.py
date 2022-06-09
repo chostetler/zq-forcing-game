@@ -35,7 +35,7 @@ class Vertex:
         self.highlighted = False
 
     def draw(self, surface):
-        if self.hovered:
+        if self.hovered and not self.is_blue:
             pygame.draw.circle(surface, Vertex.highlight_color, (self.x, self.y), self.radius+4, 0)
         if self.is_blue:
             self.color = pygame.color.Color('cyan')
@@ -59,23 +59,35 @@ class Vertex:
             print("Couldn't turn blue. Did you remember to link_graph()?")
 
 class ClickParticle:
-    growth_rate = 400/1000
+    growth_rate = 50/1000
     max_radius = 40
 
-    def __init__(self, x, y, color, radius):
+    alpha_rate = 255/400
+
+    def __init__(self, x, y, base_color, radius):
         self.x = x
         self.y = y
-        self.color = color
+        self.color = base_color
+        self.base_color = base_color
         self.radius = radius
         self.is_alive = True
+        self.alpha = 255
 
     def update_pos(self, dt):
         self.radius = self.radius + ClickParticle.growth_rate*dt
-        if self.radius > ClickParticle.max_radius:
+        self.alpha = max(0, self.alpha - ClickParticle.alpha_rate*dt)
+        self.color.a = math.floor(self.alpha)
+
+        if self.radius > ClickParticle.max_radius or self.alpha <= 0:
             self.is_alive = False
 
     def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 5)
+        width = 5
+        self.rect = pygame.Rect(self.x-math.floor(self.radius), self.y-math.floor(self.radius), (self.radius)*2, (self.radius)*2)
+        particle_surface = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        # particle_surface.fill(pygame.color.Color('red'))
+        pygame.draw.circle(particle_surface, self.color, (self.radius, self.radius), math.ceil(self.radius), width)
+        surface.blit(particle_surface, self.rect)
 
 particles = []
 
@@ -105,7 +117,8 @@ def main():
      
     g = nx.Graph()
     
-    positions = [(round(200+100*math.cos(step*2*math.pi/5)), round(200+100*math.sin(step *2*math.pi/5))) for step in [0, 1, 2, 3, 4]]
+    n = 6
+    positions = [(round(200+100*math.cos(step*2*math.pi/n)), round(200+100*math.sin(step *2*math.pi/n))) for step in range(n)]
     my_vertices = [Vertex(*position) for position in positions]
 
     my_edges = []
@@ -122,6 +135,10 @@ def main():
         edge.link_graph(g)
     print(g)
 
+    tokens = 0
+
+    font = pygame.font.SysFont("Arial", 30)
+
     # main loop
     while running:
         # event handling, gets all event from the event queue
@@ -133,7 +150,8 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONUP:
                 for vertex in my_vertices:
-                    if vertex.hovered:
+                    if vertex.hovered and not vertex.is_blue:
+                        tokens += 1
                         vertex.turn_blue()
 
         DISPLAY_SURF.fill(pygame.color.Color("white"))
@@ -149,6 +167,13 @@ def main():
         for vertex in my_vertices:
             vertex.hovered = vertex.rect.collidepoint(pygame.mouse.get_pos())
             vertex.draw(DISPLAY_SURF)
+
+        tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
+        DISPLAY_SURF.blit(tokens_surface, (20, 20))
+
+        if all([vertex.is_blue for vertex in my_vertices]):
+            win_text_surface = font.render('All done! You used '+str(tokens)+' tokens.', True, (0,0,0))
+            DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
 
         pygame.display.update()
         dt = clock.tick(60)
