@@ -62,7 +62,7 @@ class Vertex:
                 if not vertex.is_blue: continue
                 neighbors = [nb for nb in nx.neighbors(self.graph, vertex) if not nb.is_blue]
                 if len(neighbors) == 1:
-                    neighbors[0].turn_blue(time_offset+300)
+                    neighbors[0].turn_blue(time_offset+150)
 
             spawn_particle(ClickParticle(self.x, self.y, pygame.color.Color('cyan'), self.radius, time_offset))
         except:
@@ -84,9 +84,14 @@ class ClickParticle:
         self.alpha = 255
 
         self.start_time = pygame.time.get_ticks()+time_offset
+        self.has_started = False
 
     def update_pos(self, dt):
         if pygame.time.get_ticks() >= self.start_time:
+            if not self.has_started:
+                bubble_sound = pygame.mixer.Sound(sys.path[0]+'/sounds/bubble.wav')
+                bubble_sound.play()
+            self.has_started = True
             self.radius = self.radius + ClickParticle.growth_rate*dt
             self.alpha = max(0, self.alpha - ClickParticle.alpha_rate*dt)
             self.color.a = math.floor(self.alpha)
