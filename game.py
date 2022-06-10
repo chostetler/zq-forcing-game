@@ -3,6 +3,8 @@ import enum
 import pygame
 import networkx as nx
 import math
+import json
+import sys
  
 class Edge:
     def __init__(self, origin, destination):
@@ -89,6 +91,11 @@ class ClickParticle:
         pygame.draw.circle(particle_surface, self.color, (self.radius, self.radius), math.ceil(self.radius), width)
         surface.blit(particle_surface, self.rect)
 
+
+
+
+#############################################################
+
 particles = []
 
 def spawn_particle(particle):
@@ -116,27 +123,44 @@ def main():
     dt = 0
      
     g = nx.Graph()
-    
-    n = 6
-    positions = [(round(200+100*math.cos(step*2*math.pi/n)), round(200+100*math.sin(step *2*math.pi/n))) for step in range(n)]
-    my_vertices = [Vertex(*position) for position in positions]
 
-    my_edges = []
-    for i in range(len(my_vertices)):
-        for j in range(i+1, len(my_vertices)):
-            my_edges.append(Edge(my_vertices[i], my_vertices[j]))
+    graph_name = 'K_6'
+    if len(sys.argv) >= 2:
+        graph_name = sys.argv[1]
+    else:
+        # print('Please input a graph name')
+        # graph_name = input()
+        graph_name = 'K_6'
 
-    for vertex in my_vertices:
-        vertex.link_graph(g)
 
-    g.add_nodes_from(my_vertices)
-    for edge in my_edges:
-        g.add_edge(edge.origin, edge.destination)
-        edge.link_graph(g)
-    print(g)
+
+    GRAPH_CENTER_X = 200
+    GRAPH_CENTER_Y = 200
+    edge_objects = []
+
+    with open(sys.path[0] + '/graphs/' + graph_name + '.json') as graph_file:
+        data = json.load(graph_file)
+        # print(data)
+
+        vertices_dict = {}
+
+        for v in data['vertices']:
+            x = v['position'][0] + GRAPH_CENTER_X
+            y = v['position'][1] + GRAPH_CENTER_Y
+            vertex = Vertex(x, y, 20)
+            vertex.link_graph(g)
+            vertices_dict[v['id']] = vertex
+            g.add_node(vertex)
+
+        for e in data['edges']:
+            origin = vertices_dict[e['origin']]
+            destination = vertices_dict[e['destination']]
+            edge = Edge(origin, destination)
+            edge.link_graph(g)
+            g.add_edge(edge.origin, edge.destination)
+            edge_objects.append(edge)
 
     tokens = 0
-
     font = pygame.font.SysFont("Arial", 30)
 
     # main loop
@@ -149,7 +173,7 @@ def main():
                 running = False
 
             if event.type == pygame.MOUSEBUTTONUP:
-                for vertex in my_vertices:
+                for vertex in g.nodes:
                     if vertex.hovered and not vertex.is_blue:
                         tokens += 1
                         vertex.turn_blue()
@@ -162,16 +186,16 @@ def main():
             if not particle.is_alive:
                 particles.remove(particle)
         
-        for edge in my_edges:
+        for edge in edge_objects:
             edge.draw(DISPLAY_SURF)
-        for vertex in my_vertices:
+        for vertex in g.nodes:
             vertex.hovered = vertex.rect.collidepoint(pygame.mouse.get_pos())
             vertex.draw(DISPLAY_SURF)
 
         tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
         DISPLAY_SURF.blit(tokens_surface, (20, 20))
 
-        if all([vertex.is_blue for vertex in my_vertices]):
+        if all([vertex.is_blue for vertex in g.nodes]):
             win_text_surface = font.render('All done! You used '+str(tokens)+' tokens.', True, (0,0,0))
             DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
 
