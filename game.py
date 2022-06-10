@@ -5,6 +5,8 @@ import networkx as nx
 import math
 import json
 import sys
+import tkinter
+from tkinter.filedialog import askopenfilename
  
 class Edge:
     def __init__(self, origin, destination):
@@ -133,21 +135,13 @@ def main():
      
     g = nx.Graph()
 
-    graph_name = 'K_6'
-    if len(sys.argv) >= 2:
-        graph_name = sys.argv[1]
-    else:
-        # print('Please input a graph name')
-        # graph_name = input()
-        graph_name = 'K_6'
-
-
-
     GRAPH_CENTER_X = 200
     GRAPH_CENTER_Y = 200
     edge_objects = []
 
-    with open(sys.path[0] + '/graphs/' + graph_name + '.json') as graph_file:
+    tkinter.Tk().withdraw()
+    filename = askopenfilename(initialdir=sys.path[0]+'/graphs')
+    with open(filename) as graph_file:
         data = json.load(graph_file)
         # print(data)
 
@@ -174,13 +168,11 @@ def main():
 
     # main loop
     while running:
-        # event handling, gets all event from the event queue
         for event in pygame.event.get():
-            # only do something if the event is of type QUIT
             if event.type == pygame.QUIT:
-                # change the value to False, to exit the main loop
                 running = False
 
+            # Detect vertex clicks
             if event.type == pygame.MOUSEBUTTONUP:
                 for vertex in g.nodes:
                     if vertex.hovered and not vertex.is_blue:
