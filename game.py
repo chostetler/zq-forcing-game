@@ -36,27 +36,33 @@ class Vertex:
         self.hovered = False
         self.highlighted = False
 
+        self.blue_start_time = pygame.time.get_ticks()
+
     def draw(self, surface):
-        if self.hovered and not self.is_blue:
-            pygame.draw.circle(surface, Vertex.highlight_color, (self.x, self.y), self.radius+4, 0)
-        if self.is_blue:
+        if self.is_blue and pygame.time.get_ticks() >= self.blue_start_time:
             self.color = pygame.color.Color('cyan')
         else:
             self.color = pygame.color.Color('white')
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
-        pygame.draw.circle(surface, pygame.color.Color("black"), (self.x, self.y), self.radius, self.linewidth)
+        if self.hovered and not self.is_blue:
+            pygame.draw.circle(surface, Vertex.highlight_color, (self.x, self.y), self.radius, self.linewidth)
+        else:
+            pygame.draw.circle(surface, pygame.color.Color("black"), (self.x, self.y), self.radius, self.linewidth)
 
     def link_graph(self, graph):
         self.graph = graph
 
-    def turn_blue(self):
+    def turn_blue(self, time_offset=0):
         try:
             self.is_blue = True
-            neighbors = [nb for nb in nx.neighbors(self.graph, self) if not nb.is_blue]
-            if len(neighbors) == 1:
-                neighbors[0].turn_blue()
+            self.blue_start_time = pygame.time.get_ticks() + time_offset
+            for vertex in self.graph.nodes:
+                if not vertex.is_blue: continue
+                neighbors = [nb for nb in nx.neighbors(self.graph, vertex) if not nb.is_blue]
+                if len(neighbors) == 1:
+                    neighbors[0].turn_blue(time_offset+300)
 
-            spawn_particle(ClickParticle(self.x, self.y, pygame.color.Color('cyan'), self.radius))
+            spawn_particle(ClickParticle(self.x, self.y, pygame.color.Color('cyan'), self.radius, time_offset))
         except:
             print("Couldn't turn blue. Did you remember to link_graph()?")
 
@@ -66,7 +72,7 @@ class ClickParticle:
 
     alpha_rate = 255/400
 
-    def __init__(self, x, y, base_color, radius):
+    def __init__(self, x, y, base_color, radius, time_offset=0):
         self.x = x
         self.y = y
         self.color = base_color
@@ -75,13 +81,16 @@ class ClickParticle:
         self.is_alive = True
         self.alpha = 255
 
-    def update_pos(self, dt):
-        self.radius = self.radius + ClickParticle.growth_rate*dt
-        self.alpha = max(0, self.alpha - ClickParticle.alpha_rate*dt)
-        self.color.a = math.floor(self.alpha)
+        self.start_time = pygame.time.get_ticks()+time_offset
 
-        if self.radius > ClickParticle.max_radius or self.alpha <= 0:
-            self.is_alive = False
+    def update_pos(self, dt):
+        if pygame.time.get_ticks() >= self.start_time:
+            self.radius = self.radius + ClickParticle.growth_rate*dt
+            self.alpha = max(0, self.alpha - ClickParticle.alpha_rate*dt)
+            self.color.a = math.floor(self.alpha)
+
+            if self.radius > ClickParticle.max_radius or self.alpha <= 0:
+                self.is_alive = False
 
     def draw(self, surface):
         width = 5
