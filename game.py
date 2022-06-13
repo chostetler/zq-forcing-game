@@ -1,5 +1,4 @@
 # import the pygame module, so you can use it
-import enum
 import pygame
 import networkx as nx
 import math
@@ -197,6 +196,19 @@ def main():
         for vertex in g.nodes:
             vertex.hovered = vertex.rect.collidepoint(pygame.mouse.get_pos())
             vertex.draw(DISPLAY_SURF)
+
+        button_pos = (500, 400)
+        button_dim = (100, 50)
+        button_rect = pygame.Rect(button_pos, button_dim)
+        button_color = 'white'
+        if button_rect.collidepoint(pygame.mouse.get_pos()):
+            button_color = (150, 150, 255)
+        pygame.draw.rect(DISPLAY_SURF, button_color, button_rect)
+        pygame.draw.rect(DISPLAY_SURF, 'black', button_rect, 5)
+        button_text = font.render('Rule 3', True, 'black')
+        DISPLAY_SURF.blit(button_text, button_rect)
+
+        
 
         tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
         DISPLAY_SURF.blit(tokens_surface, (20, 20))
