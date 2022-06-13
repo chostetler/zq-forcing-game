@@ -6,6 +6,7 @@ import json
 import sys
 import tkinter
 from tkinter.filedialog import askopenfilename
+from enum import Enum
  
 class Edge:
     def __init__(self, origin, destination):
@@ -106,8 +107,48 @@ class ClickParticle:
         pygame.draw.circle(particle_surface, self.color, (self.radius, self.radius), math.ceil(self.radius), width)
         surface.blit(particle_surface, self.rect)
 
+class Button():
+    def __init__(self, text, x, y, width, height, font=None, hover_color=(150, 150, 255)):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.font = pygame.font.SysFont('Arial', 30)
+        self.hover_color = hover_color
+        self.draw_color = 'white'
+        self.hovered = False
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.surface = pygame.Surface(self.rect.size)
+
+    def update(self, dt=60):
+        self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
+        self.draw_color = self.hover_color if self.hovered else 'white'
+
+    def draw(self, surface: pygame.surface.Surface):
+        pygame.draw.rect(surface, self.draw_color, self.rect)
+        pygame.draw.rect(surface, 'black', self.rect, 4)
+        button_text = self.font.render(self.text, True, 'black')
+        surface.blit(button_text, (self.x+5, self.y+5))
+
+    def click(self):
+        click_sound = pygame.mixer.Sound(sys.path[0]+'/sounds/menu-bip.wav')
+        click_sound.play()
 
 
+
+
+class GameState(Enum):
+    MENU = 0
+    INSTRUCTIONS = 1
+    GAME = 2
+    GAME_OVER = 3
+
+class ActionState(Enum):
+    RULE_1 = 1
+    RULE_3_BLUE = 2
+    RULE_3_WHITE = 3
+    RULE_3_FORCE = 4
 
 #############################################################
 
@@ -170,52 +211,65 @@ def main():
     tokens = 0
     font = pygame.font.SysFont("Arial", 30)
 
+    game_state = GameState.MENU
+    action_state = ActionState.RULE_1
+
+    start_game_button = Button('Start', 50, 300, 100, 50)
+    rule_3_button = Button('Rule 3', 500, 400, 100, 50)
+
     # main loop
     while running:
-        for event in pygame.event.get():
+        DISPLAY_SURF.fill(pygame.color.Color("white"))
+        events = pygame.event.get()
+
+        if game_state == GameState.MENU:
+            title_text = font.render('Zero Forcing Game', True, 'black')
+            DISPLAY_SURF.blit(title_text, (200, 100))
+            start_game_button.update()
+            start_game_button.draw(DISPLAY_SURF)
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if start_game_button.hovered:
+                        game_state = GameState.GAME
+                        start_game_button.click()
+
+        elif game_state == GameState.GAME:
+            for event in events:
+                # Detect vertex clicks
+                if event.type == pygame.MOUSEBUTTONUP:
+                    for vertex in g.nodes:
+                        if vertex.hovered and not vertex.is_blue:
+                            tokens += 1
+                            vertex.turn_blue()
+                    if rule_3_button.hovered:
+                        action_state = ActionState.RULE_3_BLUE
+                        rule_3_button.click()
+
+            for particle in particles:
+                particle.update_pos(dt)
+                particle.draw(DISPLAY_SURF)
+                if not particle.is_alive:
+                    particles.remove(particle)
+            
+            for edge in edge_objects:
+                edge.draw(DISPLAY_SURF)
+            for vertex in g.nodes:
+                vertex.hovered = vertex.rect.collidepoint(pygame.mouse.get_pos())
+                vertex.draw(DISPLAY_SURF)
+
+            rule_3_button.update()
+            rule_3_button.draw(DISPLAY_SURF)
+
+            tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
+            DISPLAY_SURF.blit(tokens_surface, (20, 20))
+
+            if all([vertex.is_blue for vertex in g.nodes]):
+                win_text_surface = font.render('All done! You used '+str(tokens)+' tokens.', True, (0,0,0))
+                DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
+
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
-
-            # Detect vertex clicks
-            if event.type == pygame.MOUSEBUTTONUP:
-                for vertex in g.nodes:
-                    if vertex.hovered and not vertex.is_blue:
-                        tokens += 1
-                        vertex.turn_blue()
-
-        DISPLAY_SURF.fill(pygame.color.Color("white"))
-
-        for particle in particles:
-            particle.update_pos(dt)
-            particle.draw(DISPLAY_SURF)
-            if not particle.is_alive:
-                particles.remove(particle)
-        
-        for edge in edge_objects:
-            edge.draw(DISPLAY_SURF)
-        for vertex in g.nodes:
-            vertex.hovered = vertex.rect.collidepoint(pygame.mouse.get_pos())
-            vertex.draw(DISPLAY_SURF)
-
-        button_pos = (500, 400)
-        button_dim = (100, 50)
-        button_rect = pygame.Rect(button_pos, button_dim)
-        button_color = 'white'
-        if button_rect.collidepoint(pygame.mouse.get_pos()):
-            button_color = (150, 150, 255)
-        pygame.draw.rect(DISPLAY_SURF, button_color, button_rect)
-        pygame.draw.rect(DISPLAY_SURF, 'black', button_rect, 5)
-        button_text = font.render('Rule 3', True, 'black')
-        DISPLAY_SURF.blit(button_text, button_rect)
-
-        
-
-        tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
-        DISPLAY_SURF.blit(tokens_surface, (20, 20))
-
-        if all([vertex.is_blue for vertex in g.nodes]):
-            win_text_surface = font.render('All done! You used '+str(tokens)+' tokens.', True, (0,0,0))
-            DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
 
         pygame.display.update()
         dt = clock.tick(60)
