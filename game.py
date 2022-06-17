@@ -23,6 +23,9 @@ class Edge:
     def link_graph(self, graph):
         self.graph = graph
 
+    def update(self, dt=60):
+        pass
+
 class Vertex:
     highlight_color = pygame.Color('orange')
 
@@ -67,6 +70,9 @@ class Vertex:
             spawn_particle(ClickParticle(self.x, self.y, pygame.color.Color('cyan'), self.radius, time_offset))
         except:
             print("Couldn't turn blue. Did you remember to link_graph()?")
+
+    def update(self, dt=60):
+        self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
 class ClickParticle:
     growth_rate = 50/1000
@@ -141,8 +147,9 @@ class Button():
 class GameState(Enum):
     MENU = 0
     INSTRUCTIONS = 1
-    GAME = 2
-    GAME_OVER = 3
+    CHOOSE_FILE = 2
+    GAME = 3
+    GAME_OVER = 4
 
 class ActionState(Enum):
     RULE_1 = 1
@@ -182,31 +189,6 @@ def main():
 
     GRAPH_CENTER_X = 200
     GRAPH_CENTER_Y = 200
-    edge_objects = []
-
-    tkinter.Tk().withdraw()
-    filename = askopenfilename(initialdir=sys.path[0]+'/graphs')
-    with open(filename) as graph_file:
-        data = json.load(graph_file)
-        # print(data)
-
-        vertices_dict = {}
-
-        for v in data['vertices']:
-            x = v['position'][0] + GRAPH_CENTER_X
-            y = v['position'][1] + GRAPH_CENTER_Y
-            vertex = Vertex(x, y, 20)
-            vertex.link_graph(g)
-            vertices_dict[v['id']] = vertex
-            g.add_node(vertex)
-
-        for e in data['edges']:
-            origin = vertices_dict[e['origin']]
-            destination = vertices_dict[e['destination']]
-            edge = Edge(origin, destination)
-            edge.link_graph(g)
-            g.add_edge(edge.origin, edge.destination)
-            edge_objects.append(edge)
 
     tokens = 0
     font = pygame.font.SysFont("Arial", 30)
@@ -230,8 +212,34 @@ def main():
             for event in events:
                 if event.type == pygame.MOUSEBUTTONUP:
                     if start_game_button.hovered:
-                        game_state = GameState.GAME
+                        game_state = GameState.CHOOSE_FILE
                         start_game_button.click()
+
+        if game_state == GameState.CHOOSE_FILE:
+            tkinter.Tk().withdraw()
+            filename = askopenfilename(initialdir=sys.path[0]+'/graphs')
+            g = nx.Graph()
+            edge_objects = []
+            with open(filename) as graph_file:
+                data = json.load(graph_file)
+                # print(data)
+                vertices_dict = {}
+                for v in data['vertices']:
+                    x = v['position'][0] + GRAPH_CENTER_X
+                    y = v['position'][1] + GRAPH_CENTER_Y
+                    vertex = Vertex(x, y, 20)
+                    vertex.link_graph(g)
+                    vertices_dict[v['id']] = vertex
+                    g.add_node(vertex)
+
+                for e in data['edges']:
+                    origin = vertices_dict[e['origin']]
+                    destination = vertices_dict[e['destination']]
+                    edge = Edge(origin, destination)
+                    edge.link_graph(g)
+                    g.add_edge(edge.origin, edge.destination)
+                    edge_objects.append(edge)
+            game_state = GameState.GAME
 
         elif game_state == GameState.GAME:
             for event in events:
@@ -245,18 +253,18 @@ def main():
                         action_state = ActionState.RULE_3_BLUE
                         rule_3_button.click()
 
+            # Update and draw particles, edges, vertices, and buttons
             for particle in particles:
                 particle.update_pos(dt)
                 particle.draw(DISPLAY_SURF)
                 if not particle.is_alive:
                     particles.remove(particle)
-            
             for edge in edge_objects:
+                edge.update(dt)
                 edge.draw(DISPLAY_SURF)
             for vertex in g.nodes:
-                vertex.hovered = vertex.rect.collidepoint(pygame.mouse.get_pos())
+                vertex.update(dt)
                 vertex.draw(DISPLAY_SURF)
-
             rule_3_button.update()
             rule_3_button.draw(DISPLAY_SURF)
 
@@ -267,6 +275,7 @@ def main():
                 win_text_surface = font.render('All done! You used '+str(tokens)+' tokens.', True, (0,0,0))
                 DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
 
+        # Regardless of game state, check for quit
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
