@@ -41,6 +41,8 @@ class Vertex:
         self.hovered = False
         self.highlighted = False
 
+        self.border_color = 'black'
+
         self.blue_start_time = pygame.time.get_ticks()
 
     def draw(self, surface):
@@ -50,9 +52,10 @@ class Vertex:
             self.color = pygame.color.Color('white')
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
         if self.hovered and not self.is_blue:
-            pygame.draw.circle(surface, Vertex.highlight_color, (self.x, self.y), self.radius, self.linewidth)
+            self.border_color = pygame.color.Color('orange')
         else:
-            pygame.draw.circle(surface, pygame.color.Color("black"), (self.x, self.y), self.radius, self.linewidth)
+            self.border_color = pygame.color.Color('black')
+        pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 
     def link_graph(self, graph):
         self.graph = graph
@@ -141,7 +144,24 @@ class Button():
         click_sound = pygame.mixer.Sound(sys.path[0]+'/sounds/menu-bip.wav')
         click_sound.play()
 
+class ForceArrow:
+    def __init__(self, origin: Vertex, destination: Vertex):
+        self.origin = origin
+        self.destination = destination
 
+    def draw(self, surface: pygame.surface.Surface):
+        self.origin_coords = (self.origin.x, self.origin.y)
+        self.destination_coords = (self.destination.x, self.destination.y)
+        self.center_coords = (self.origin_coords + self.destination_coords) / 2
+        self.dy, self.dx = (self.destination_coords - self.origin_coords)
+
+        self.angle = math.atan2(self.dy, self.dx)
+        arrow_image = pygame.image.load('images/force-arrow.png')
+        arrow_rotated = pygame.transform.rotate(arrow_image, self.angle)
+
+        arrow_rotated.blit(surface, arrow_rotated.get_rect(center=self.center_coords))
+
+#TODO: The state functionality needs lots of cleaning up. I might redo all this...
 
 
 class GameState(Enum):
@@ -242,16 +262,28 @@ def main():
             game_state = GameState.GAME
 
         elif game_state == GameState.GAME:
-            for event in events:
-                # Detect vertex clicks
-                if event.type == pygame.MOUSEBUTTONUP:
-                    for vertex in g.nodes:
-                        if vertex.hovered and not vertex.is_blue:
-                            tokens += 1
-                            vertex.turn_blue()
-                    if rule_3_button.hovered:
-                        action_state = ActionState.RULE_3_BLUE
-                        rule_3_button.click()
+            if action_state == ActionState.RULE_1:
+                for event in events:
+                    # Detect vertex clicks
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        for vertex in g.nodes:
+                            if vertex.hovered and not vertex.is_blue:
+                                tokens += 1
+                                vertex.turn_blue()
+                        if rule_3_button.hovered:
+                            action_state = ActionState.RULE_3_BLUE
+                            rule_3_button.click()
+            elif action_state == ActionState.RULE_3_BLUE:
+                blue_vertices = [vertex for vertex in list(g.nodes) if vertex.is_blue]
+                white_vertices = list(set(g.nodes) - set(blue_vertices))
+                connected_components_graphs = list(nx.connected_components(g.subgraph(white_vertices)))
+                
+
+                for event in events:
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        if rule_3_button.hovered:
+                            action_state = ActionState.RULE_1
+                            rule_3_button.click()
 
             # Update and draw particles, edges, vertices, and buttons
             for particle in particles:
