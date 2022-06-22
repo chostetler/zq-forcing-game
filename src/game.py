@@ -161,14 +161,14 @@ def main():
                     # Detect vertex clicks
                     if event.type == pygame.MOUSEBUTTONUP:
                         for vertex in g.nodes:
-                            if vertex.hovered and not vertex.is_blue:
+                            if vertex.hovered and not vertex.is_filled:
                                 tokens += 1
                                 vertex.turn_blue()
                         if rule_3_button.hovered:
                             action_state = ActionState.RULE_3_BLUE
                             rule_3_button.click()
             elif action_state == ActionState.RULE_3_BLUE:
-                blue_vertices = [vertex for vertex in list(g.nodes) if vertex.is_blue]
+                blue_vertices = [vertex for vertex in list(g.nodes) if vertex.is_filled]
                 white_vertices = list(set(g.nodes) - set(blue_vertices))
                 connected_components_graphs = list(nx.connected_components(g.subgraph(white_vertices)))
                 
@@ -197,7 +197,7 @@ def main():
             tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
             DISPLAY_SURF.blit(tokens_surface, (20, 20))
 
-            if all([vertex.is_blue for vertex in g.nodes]):
+            if all([vertex.is_filled for vertex in g.nodes]):
                 win_text_surface = font.render('All done! You used '+str(tokens)+' tokens.', True, (0,0,0))
                 DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
 

@@ -23,12 +23,12 @@ class Edge:
 class Vertex:
     highlight_color = pygame.Color('orange')
 
-    def __init__(self, x, y, radius=20, is_blue=False):
+    def __init__(self, x, y, radius=20, is_filled=False):
         self.x = x
         self.y = y
         self.coordinates = pygame
         self.radius = radius
-        self.is_blue = is_blue
+        self.is_filled = is_filled
 
         self.linewidth = 4
         self.rect = pygame.Rect(x-radius, y-radius, radius*2, radius*2)
@@ -40,12 +40,12 @@ class Vertex:
         self.blue_start_time = pygame.time.get_ticks()
 
     def draw(self, surface):
-        if self.is_blue and pygame.time.get_ticks() >= self.blue_start_time:
+        if self.is_filled and pygame.time.get_ticks() >= self.blue_start_time:
             self.color = pygame.color.Color('cyan')
         else:
             self.color = pygame.color.Color('white')
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
-        if self.hovered and not self.is_blue:
+        if self.hovered and not self.is_filled:
             self.border_color = pygame.color.Color('orange')
         else:
             self.border_color = pygame.color.Color('black')
@@ -56,11 +56,11 @@ class Vertex:
 
     def turn_blue(self, time_offset=0):
         try:
-            self.is_blue = True
+            self.is_filled = True
             self.blue_start_time = pygame.time.get_ticks() + time_offset
             for vertex in self.graph.nodes:
-                if not vertex.is_blue: continue
-                neighbors = [nb for nb in nx.neighbors(self.graph, vertex) if not nb.is_blue]
+                if not vertex.is_filled: continue
+                neighbors = [nb for nb in nx.neighbors(self.graph, vertex) if not nb.is_filled]
                 if len(neighbors) == 1:
                     neighbors[0].turn_blue(time_offset+150)
 
