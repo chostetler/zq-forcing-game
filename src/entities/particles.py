@@ -8,7 +8,7 @@ class ClickParticle:
 
     alpha_rate = 255/400
 
-    def __init__(self, x, y, base_color, radius, time_offset=0):
+    def __init__(self, x, y, base_color=FILLED_COLOR, radius=DEFAULT_VERTEX_RADIUS, time_offset=0):
         self.x = x
         self.y = y
         self.color = base_color
@@ -37,6 +37,5 @@ class ClickParticle:
         width = 5
         self.rect = pygame.Rect(self.x-math.floor(self.radius), self.y-math.floor(self.radius), (self.radius)*2, (self.radius)*2)
         particle_surface = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        # particle_surface.fill(pygame.color.Color('red'))
         pygame.draw.circle(particle_surface, self.color, (self.radius, self.radius), math.ceil(self.radius), width)
         surface.blit(particle_surface, self.rect)

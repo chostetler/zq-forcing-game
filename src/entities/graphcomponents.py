@@ -1,6 +1,7 @@
 import pygame
 import networkx as nx
 from entities.particles import ClickParticle
+from config import *
 
 class Edge:
     def __init__(self, origin, destination):
@@ -23,7 +24,7 @@ class Edge:
 class Vertex:
     highlight_color = pygame.Color('orange')
 
-    def __init__(self, x, y, radius=20, is_filled=False):
+    def __init__(self, x, y, radius=DEFAULT_VERTEX_RADIUS, is_filled=False):
         self.x = x
         self.y = y
         self.coordinates = pygame
@@ -41,9 +42,9 @@ class Vertex:
 
     def draw(self, surface):
         if self.is_filled and pygame.time.get_ticks() >= self.blue_start_time:
-            self.color = pygame.color.Color('cyan')
+            self.color = FILLED_COLOR
         else:
-            self.color = pygame.color.Color('white')
+            self.color = EMPTY_COLOR
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
         if self.hovered and not self.is_filled:
             self.border_color = pygame.color.Color('orange')
@@ -64,7 +65,7 @@ class Vertex:
                 if len(neighbors) == 1:
                     neighbors[0].turn_blue(time_offset+150)
 
-            # spawn_particle(ClickParticle(self.x, self.y, pygame.color.Color('cyan'), self.radius, time_offset))
+            # spawn_particle(ClickParticle(self.x, self.y, FILLED_COLOR, self.radius, time_offset))
         except:
             print("Couldn't turn blue. Did you remember to link_graph()?")
 
