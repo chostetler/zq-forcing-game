@@ -5,8 +5,10 @@ import math
 import json
 import sys
 import tkinter
+from pathlib import Path
 from tkinter.filedialog import askopenfilename
 from enum import Enum
+from config import *
  
 class Edge:
     def __init__(self, origin, destination):
@@ -98,7 +100,7 @@ class ClickParticle:
     def update_pos(self, dt):
         if pygame.time.get_ticks() >= self.start_time:
             if not self.has_started:
-                bubble_sound = pygame.mixer.Sound(sys.path[0]+'/assets/sounds/bubble.wav')
+                bubble_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bubble.wav')
                 bubble_sound.play()
             self.has_started = True
             self.radius = self.radius + ClickParticle.growth_rate*dt
@@ -141,7 +143,7 @@ class Button():
         surface.blit(button_text, (self.x+5, self.y+5))
 
     def click(self):
-        click_sound = pygame.mixer.Sound(sys.path[0]+'/assets/sounds/menu-bip.wav')
+        click_sound = pygame.mixer.Sound(SOUNDS_PATH / 'menu-bip.wav')
         click_sound.play()
 
 class ForceArrow:
@@ -156,7 +158,7 @@ class ForceArrow:
         self.dy, self.dx = (self.destination_coords - self.origin_coords)
 
         self.angle = math.atan2(self.dy, self.dx)
-        arrow_image = pygame.image.load('assets/images/force-arrow.png')
+        arrow_image = pygame.image.load(IMAGES_PATH / 'force-arrow.png')
         arrow_rotated = pygame.transform.rotate(arrow_image, self.angle)
 
         arrow_rotated.blit(surface, arrow_rotated.get_rect(center=self.center_coords))
@@ -192,7 +194,7 @@ def main():
     # initialize the pygame module
     pygame.init()
     # load and set the logo
-    logo = pygame.image.load("assets\images\logo32x32.png")
+    logo = pygame.image.load(IMAGES_PATH / "logo32x32.png")
     pygame.display.set_icon(logo)
     pygame.display.set_caption("minimal program")
      
@@ -237,7 +239,7 @@ def main():
 
         if game_state == GameState.CHOOSE_FILE:
             tkinter.Tk().withdraw()
-            filename = askopenfilename(initialdir=sys.path[0]+'/graphs')
+            filename = askopenfilename(initialdir=GRAPHS_PATH)
             g = nx.Graph()
             edge_objects = []
             with open(filename) as graph_file:
