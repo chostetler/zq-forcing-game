@@ -3,7 +3,6 @@ import pygame
 import networkx as nx
 import math
 import json
-import sys
 import tkinter
 from pathlib import Path
 from tkinter.filedialog import askopenfilename
