@@ -50,6 +50,8 @@ class Vertex:
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
         if self.hovered and not self.is_filled:
             self.border_color = RULE_1_HOVER_COLOR
+        elif self in self.graph.hovered_connected_component:
+            self.border_color = RULE_3_HOVER_COLOR
         else:
             self.border_color = pygame.color.Color('black')
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
@@ -112,6 +114,11 @@ class GameGraph(nx.Graph):
         self.filled_vertices = [vertex for vertex in self.nodes if vertex.is_filled]
         self.nx_graph: nx.Graph = nx.Graph(self.edges)
         self.connected_components_sets = list(nx.connected_components(nx.induced_subgraph(self.nx_graph, self.white_vertices)))
+        self.hovered_connected_component = {}
+        for cc in self.connected_components_sets:
+            for vertex in cc:
+                if vertex.hovered:
+                    self.hovered_connected_component = cc
 
     def do_forces(self):
         for vertex in self.filled_vertices:
