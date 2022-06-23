@@ -1,5 +1,6 @@
 import pygame
 import networkx as nx
+import json
 from entities.particles import ClickParticle
 from config import *
 
@@ -71,3 +72,46 @@ class Vertex:
 
     def update(self, dt=60):
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
+
+class GameGraph(nx.Graph):
+    def __init__(self, filename=None):
+        super().__init__()
+        self.edge_objects = []
+        if filename is not None:
+            self.load_from_file(filename)
+        self.update()
+
+    def induced_subgraph(self, *args):
+        graph = nx.Graph(self.edges)
+        return graph.induced_subgraph(*args)
+
+    def load_from_file(self, filename):
+        with open(filename) as graph_file:
+            data = json.load(graph_file)
+            vertices_dict = {}
+            for v in data['vertices']:
+                x = v['position'][0] + GRAPH_CENTER_X
+                y = v['position'][1] + GRAPH_CENTER_Y
+                vertex = Vertex(x, y, 20)
+                vertex.link_graph(self)
+                vertices_dict[v['id']] = vertex
+                self.add_node(vertex)
+
+            for e in data['edges']:
+                origin = vertices_dict[e['origin']]
+                destination = vertices_dict[e['destination']]
+                edge = Edge(origin, destination)
+                edge.link_graph(self)
+                self.add_edge(edge.origin, edge.destination)
+                self.edge_objects.append(edge)
+
+    def component_is_hovered(self, edge):
+        if edge not in self.nodes: return False
+
+    def update(self, dt=0):
+        self.white_vertices = [vertex for vertex in self.nodes if not vertex.is_filled]
+        self.filled_vertices = [vertex for vertex in self.nodes if vertex.is_filled]
+        self.nx_graph: nx.Graph = nx.Graph(self.edges)
+        self.connected_components_sets = list(nx.connected_components(nx.induced_subgraph(self.nx_graph, self.white_vertices)))
+
+

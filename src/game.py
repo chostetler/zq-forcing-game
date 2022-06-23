@@ -8,7 +8,7 @@ from pathlib import Path
 from tkinter.filedialog import askopenfilename
 from enum import Enum
 from config import *
-from entities.graphcomponents import Vertex, Edge
+from entities.graphcomponents import GameGraph, Vertex, Edge
  
 class Button():
     def __init__(self, text, x, y, width, height, font=None, hover_color=(150, 150, 255)):
@@ -98,11 +98,8 @@ def main():
 
     clock = pygame.time.Clock()
     dt = 0
-     
-    g = nx.Graph()
 
-    GRAPH_CENTER_X = 200
-    GRAPH_CENTER_Y = 200
+    g = GameGraph()
 
     tokens = 0
     font = pygame.font.SysFont("Arial", 30)
@@ -132,27 +129,11 @@ def main():
         if game_state == GameState.CHOOSE_FILE:
             tkinter.Tk().withdraw()
             filename = askopenfilename(initialdir=GRAPHS_PATH)
-            g = nx.Graph()
-            edge_objects = []
-            with open(filename) as graph_file:
-                data = json.load(graph_file)
-                # print(data)
-                vertices_dict = {}
-                for v in data['vertices']:
-                    x = v['position'][0] + GRAPH_CENTER_X
-                    y = v['position'][1] + GRAPH_CENTER_Y
-                    vertex = Vertex(x, y, 20)
-                    vertex.link_graph(g)
-                    vertices_dict[v['id']] = vertex
-                    g.add_node(vertex)
 
-                for e in data['edges']:
-                    origin = vertices_dict[e['origin']]
-                    destination = vertices_dict[e['destination']]
-                    edge = Edge(origin, destination)
-                    edge.link_graph(g)
-                    g.add_edge(edge.origin, edge.destination)
-                    edge_objects.append(edge)
+            g = GameGraph()
+            g.load_from_file(filename)
+            g.update()
+            
             game_state = GameState.GAME
 
         elif game_state == GameState.GAME:
@@ -168,11 +149,6 @@ def main():
                             action_state = ActionState.RULE_3_BLUE
                             rule_3_button.click()
             elif action_state == ActionState.RULE_3_BLUE:
-                blue_vertices = [vertex for vertex in list(g.nodes) if vertex.is_filled]
-                white_vertices = list(set(g.nodes) - set(blue_vertices))
-                connected_components_graphs = list(nx.connected_components(g.subgraph(white_vertices)))
-                
-
                 for event in events:
                     if event.type == pygame.MOUSEBUTTONUP:
                         if rule_3_button.hovered:
@@ -185,7 +161,7 @@ def main():
                 particle.draw(DISPLAY_SURF)
                 if not particle.is_alive:
                     particles.remove(particle)
-            for edge in edge_objects:
+            for edge in g.edge_objects:
                 edge.update(dt)
                 edge.draw(DISPLAY_SURF)
             for vertex in g.nodes:
@@ -193,6 +169,8 @@ def main():
                 vertex.draw(DISPLAY_SURF)
             rule_3_button.update()
             rule_3_button.draw(DISPLAY_SURF)
+
+            g.update(dt)
 
             tokens_surface = font.render('Tokens: '+str(tokens), True, (0,0,0))
             DISPLAY_SURF.blit(tokens_surface, (20, 20))

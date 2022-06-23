@@ -13,4 +13,7 @@ SOUNDS_PATH: Path = ASSETS_PATH / 'sounds'
 FILLED_COLOR: pygame.Color = pygame.Color('cyan')
 EMPTY_COLOR: pygame.Color = pygame.Color('white')
 
+GRAPH_CENTER_X = 200
+GRAPH_CENTER_Y = 200
+
 DEFAULT_VERTEX_RADIUS = 20
