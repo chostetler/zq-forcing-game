@@ -30,3 +30,6 @@ TIME_BETWEEN_AUTOFORCE = 250
 
 # Forcing
 AUTOFORCE_ENABLED = True
+
+# Visual settings
+RENDER_VERTEX_LABELS = True

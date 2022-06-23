@@ -45,6 +45,7 @@ class Vertex:
         self.force_time = 0
 
         self.border_color = 'black'
+        self.label_font = pygame.font.SysFont("Arial", 20)
 
     def render(self, surface):
         if self.is_filled:
@@ -62,6 +63,11 @@ class Vertex:
                 self.border_color = RULE_3_SELECTED_COLOR
             elif self in self.graph.hovered_connected_component:
                 self.border_color = RULE_3_HOVER_COLOR
+
+        if RENDER_VERTEX_LABELS:
+            label_text = self.label_font.render(str(self.id), True, 'black')
+            surface.blit(label_text, (self.x+self.radius*.7, self.y+self.radius*.7))
+
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 
     def link_graph(self, graph):
@@ -102,7 +108,7 @@ class GameGraph(nx.Graph):
             for v in data['vertices']:
                 x = v['position'][0] + GRAPH_CENTER_X
                 y = v['position'][1] + GRAPH_CENTER_Y
-                vertex = Vertex(x, y, 20)
+                vertex = Vertex(x, y, 20, id=v['id'])
                 vertex.link_graph(self)
                 vertices_dict[v['id']] = vertex
                 self.add_node(vertex)
