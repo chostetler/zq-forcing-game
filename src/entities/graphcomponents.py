@@ -27,12 +27,14 @@ class Edge:
 class Vertex:
     highlight_color = RULE_1_HOVER_COLOR
 
-    def __init__(self, x, y, radius=DEFAULT_VERTEX_RADIUS, is_filled=False):
+    def __init__(self, x, y, radius=DEFAULT_VERTEX_RADIUS, is_filled=False, id=None):
         self.x = x
         self.y = y
         self.coordinates = pygame
         self.radius = radius
         self.is_filled = is_filled
+
+        self.id = id
 
         self.linewidth = 4
         self.rect = pygame.Rect(x-radius, y-radius, radius*2, radius*2)
