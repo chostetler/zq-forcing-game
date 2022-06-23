@@ -80,8 +80,6 @@ def spawn_particle(particle):
 
 # define a main function
 def main():
-    WIN_WIDTH = 640
-    WIN_HEIGHT = 480
     
     # initialize the pygame module
     pygame.init()
@@ -127,19 +125,19 @@ def main():
                         start_game_button.click()
 
         if game_state == GameState.CHOOSE_FILE:
+            # Open file selection dialog to choose file containing graph
             tkinter.Tk().withdraw()
             filename = askopenfilename(initialdir=GRAPHS_PATH)
-
             g = GameGraph()
             g.load_from_file(filename)
-            g.update()
-            
             game_state = GameState.GAME
 
         elif game_state == GameState.GAME:
+            # This is the game state representing the game being played
+            # Action state tells us what action is being taken - rule 1, rule 2, etc.
             if action_state == ActionState.RULE_1:
                 for event in events:
-                    # Detect vertex clicks
+                    # Detect clicks
                     if event.type == pygame.MOUSEBUTTONUP:
                         for vertex in g.nodes:
                             if vertex.hovered and not vertex.is_filled:

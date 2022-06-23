@@ -23,7 +23,7 @@ class Edge:
         pass
 
 class Vertex:
-    highlight_color = pygame.Color('orange')
+    highlight_color = RULE_1_HOVER_COLOR
 
     def __init__(self, x, y, radius=DEFAULT_VERTEX_RADIUS, is_filled=False):
         self.x = x
@@ -48,7 +48,7 @@ class Vertex:
             self.color = EMPTY_COLOR
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
         if self.hovered and not self.is_filled:
-            self.border_color = pygame.color.Color('orange')
+            self.border_color = RULE_1_HOVER_COLOR
         else:
             self.border_color = pygame.color.Color('black')
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)

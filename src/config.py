@@ -1,19 +1,25 @@
 from pathlib import Path
 import pygame
 
-BASE_PATH: Path = Path(__file__).parent.parent
+# File Paths
 
+BASE_PATH: Path = Path(__file__).parent.parent
 ASSETS_PATH: Path = BASE_PATH / 'assets'
 GRAPHS_PATH: Path = BASE_PATH / 'graphs'
 SRC_PATH: Path = BASE_PATH / 'src'
-
 IMAGES_PATH: Path = ASSETS_PATH / 'images'
 SOUNDS_PATH: Path = ASSETS_PATH / 'sounds'
 
-FILLED_COLOR: pygame.Color = pygame.Color('cyan')
+# Colors
+FILLED_COLOR: pygame.Color = pygame.Color('#5751FF')
 EMPTY_COLOR: pygame.Color = pygame.Color('white')
+RULE_1_HOVER_COLOR: pygame.Color = pygame.Color('cyan')
+RULE_3_HOVER_COLOR: pygame.Color = pygame.Color('#FFD65C')
+RULE_3_SELECTED_COLOR: pygame.Color = pygame.Color('#FF8F00')
 
+# Coordinates/Dimensions
+WIN_WIDTH = 800
+WIN_HEIGHT = 600
 GRAPH_CENTER_X = 200
 GRAPH_CENTER_Y = 200
-
 DEFAULT_VERTEX_RADIUS = 20
