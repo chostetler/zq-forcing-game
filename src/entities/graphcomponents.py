@@ -10,7 +10,7 @@ class Edge:
         self.destination = destination
         self.hovered = False
 
-    def draw(self, surface):
+    def render(self, surface):
         if self.hovered:
             pass
         pygame.draw.line(surface, pygame.color.Color('black'), (self.origin.x, self.origin.y), (self.destination.x, self.destination.y))
@@ -42,7 +42,7 @@ class Vertex:
 
         self.border_color = 'black'
 
-    def draw(self, surface):
+    def render(self, surface):
         if self.is_filled:
             self.color = FILLED_COLOR
         else:

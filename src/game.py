@@ -28,7 +28,7 @@ class Button():
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
         self.draw_color = self.hover_color if self.hovered else 'white'
 
-    def draw(self, surface: pygame.surface.Surface):
+    def render(self, surface: pygame.surface.Surface):
         pygame.draw.rect(surface, self.draw_color, self.rect)
         pygame.draw.rect(surface, 'black', self.rect, 4)
         button_text = self.font.render(self.text, True, 'black')
@@ -43,7 +43,7 @@ class ForceArrow:
         self.origin = origin
         self.destination = destination
 
-    def draw(self, surface: pygame.surface.Surface):
+    def render(self, surface: pygame.surface.Surface):
         self.origin_coords = (self.origin.x, self.origin.y)
         self.destination_coords = (self.destination.x, self.destination.y)
         self.center_coords = (self.origin_coords + self.destination_coords) / 2
@@ -56,6 +56,22 @@ class ForceArrow:
         arrow_rotated.blit(surface, arrow_rotated.get_rect(center=self.center_coords))
 
 #TODO: The state functionality needs lots of cleaning up. I might redo all this...
+
+class Game:
+    def __init__(self) -> None:
+        pass
+
+    def game_loop(self) -> None:
+        pass
+
+    def get_events(self):
+        pass
+
+    def update(self) -> None:
+        pass
+
+    def render(self) -> None:
+        pass
 
 
 class GameState(Enum):
@@ -121,7 +137,7 @@ def main():
             title_text = font.render('Zero Forcing Game', True, 'black')
             DISPLAY_SURF.blit(title_text, (200, 100))
             start_game_button.update()
-            start_game_button.draw(DISPLAY_SURF)
+            start_game_button.render(DISPLAY_SURF)
             for event in events:
                 if event.type == pygame.MOUSEBUTTONUP:
                     if start_game_button.hovered:
@@ -166,20 +182,20 @@ def main():
             # Update and draw particles, edges, vertices, and buttons
             for particle in game_data['particles']:
                 particle.update_pos(dt)
-                particle.draw(DISPLAY_SURF)
+                particle.render(DISPLAY_SURF)
                 if not particle.is_alive:
                     game_data['particles'].remove(particle)
             for edge in g.edge_objects:
                 edge.update(dt)
-                edge.draw(DISPLAY_SURF)
+                edge.render(DISPLAY_SURF)
             for vertex in g.nodes:
                 vertex.update(dt)
-                vertex.draw(DISPLAY_SURF)
+                vertex.render(DISPLAY_SURF)
 
             rule_3_button.update()
-            rule_3_button.draw(DISPLAY_SURF)
+            rule_3_button.render(DISPLAY_SURF)
             reset_button.update()
-            reset_button.draw(DISPLAY_SURF)
+            reset_button.render(DISPLAY_SURF)
 
             g.update(dt)
 

@@ -27,7 +27,7 @@ class ClickParticle:
         if self.radius > ClickParticle.max_radius or self.alpha <= 0:
             self.is_alive = False
 
-    def draw(self, surface):
+    def render(self, surface):
         width = 5
         self.rect = pygame.Rect(self.x-math.floor(self.radius), self.y-math.floor(self.radius), (self.radius)*2, (self.radius)*2)
         particle_surface = pygame.Surface(self.rect.size, pygame.SRCALPHA)
