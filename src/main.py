@@ -83,12 +83,12 @@ class Game:
         self.reset_button = Button('Reset', 500, 500, 100, 50)
 
     def game_loop(self) -> None:
-        self.get_events()
+        self.handle_events()
         self.update()
         self.render()
         self.clock_tick()
 
-    def get_events(self):
+    def handle_events(self):
         '''Handle events provided by pygame'''
         self.events = pygame.event.get()
 
@@ -184,7 +184,7 @@ class Game:
             self.DISPLAY_SURF.blit(self.tokens_surface, (20, 20))
 
             if all([vertex.is_filled for vertex in self.g.nodes]):
-                win_text_surface = self.font.render('All done! You used '+str(self.tokens)+' tokens.', True, (0,0,0))
+                win_text_surface = self.font.render('All done! Blue used '+str(self.tokens)+' tokens.', True, (0,0,0))
                 self.DISPLAY_SURF.blit(win_text_surface, (50, WIN_HEIGHT-100))
 
         pygame.display.update()
