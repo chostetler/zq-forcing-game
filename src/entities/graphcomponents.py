@@ -37,12 +37,13 @@ class Vertex:
         self.hovered = False
         self.highlighted = False
 
+        self.has_forced = False
+        self.force_time = 0
+
         self.border_color = 'black'
 
-        self.blue_start_time = pygame.time.get_ticks()
-
     def draw(self, surface):
-        if self.is_filled and pygame.time.get_ticks() >= self.blue_start_time:
+        if self.is_filled:
             self.color = FILLED_COLOR
         else:
             self.color = EMPTY_COLOR
@@ -54,23 +55,20 @@ class Vertex:
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 
     def link_graph(self, graph):
-        self.graph = graph
+        self.graph: GameGraph = graph
 
-    def turn_blue(self, time_offset=0):
+    def turn_blue(self):
+        self.force_time = pygame.time.get_ticks() + 250
         try:
             self.is_filled = True
-            self.blue_start_time = pygame.time.get_ticks() + time_offset
-            for vertex in self.graph.nodes:
-                if not vertex.is_filled: continue
-                neighbors = [nb for nb in nx.neighbors(self.graph, vertex) if not nb.is_filled]
-                if len(neighbors) == 1:
-                    neighbors[0].turn_blue(time_offset+150)
-
             # spawn_particle(ClickParticle(self.x, self.y, FILLED_COLOR, self.radius, time_offset))
         except:
             print("Couldn't turn blue. Did you remember to link_graph()?")
 
     def update(self, dt=60):
+        if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced:
+            self.graph.do_forces()
+            self.has_forced = True
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
 class GameGraph(nx.Graph):
@@ -113,5 +111,12 @@ class GameGraph(nx.Graph):
         self.filled_vertices = [vertex for vertex in self.nodes if vertex.is_filled]
         self.nx_graph: nx.Graph = nx.Graph(self.edges)
         self.connected_components_sets = list(nx.connected_components(nx.induced_subgraph(self.nx_graph, self.white_vertices)))
+
+    def do_forces(self):
+        for vertex in self.filled_vertices:
+            neighbors = [v for v in nx.neighbors(self, vertex) if not v.is_filled]
+            if len(neighbors) == 1:
+                neighbors[0].turn_blue()
+
 
 
