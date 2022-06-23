@@ -3,6 +3,7 @@ import networkx as nx
 import json
 from entities.particles import ClickParticle
 from config import *
+from state.states import GameState, ActionState
 
 class Edge:
     def __init__(self, origin, destination):
@@ -48,12 +49,14 @@ class Vertex:
         else:
             self.color = EMPTY_COLOR
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius, 0)
-        if self.hovered and not self.is_filled:
-            self.border_color = RULE_1_HOVER_COLOR
-        elif self in self.graph.hovered_connected_component:
-            self.border_color = RULE_3_HOVER_COLOR
-        else:
-            self.border_color = pygame.color.Color('black')
+
+        self.border_color = pygame.color.Color('black')
+        if self.graph.game.action_state == ActionState.RULE_1:
+            if self.hovered and not self.is_filled:
+                self.border_color = RULE_1_HOVER_COLOR
+        elif self.graph.game.action_state == ActionState.RULE_3_BLUE:
+            if self in self.graph.hovered_connected_component:
+                self.border_color = RULE_3_HOVER_COLOR
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 
     def link_graph(self, graph):
@@ -74,9 +77,9 @@ class Vertex:
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
 class GameGraph(nx.Graph):
-    def __init__(self, filename=None, game_data={}):
+    def __init__(self, filename=None, parent_game=None):
         super().__init__()
-        self.game_data = game_data
+        self.game = parent_game
         self.edge_objects = []
         if filename is not None:
             self.load_from_file(filename)

@@ -1,15 +1,12 @@
 # import the pygame module, so you can use it
-from telnetlib import GA
 import pygame
-import networkx as nx
 import math
-import json
 import tkinter
-from pathlib import Path
 from tkinter.filedialog import askopenfilename
 from enum import Enum, auto
 from config import *
-from entities.graphcomponents import GameGraph, Vertex, Edge
+import entities.graphcomponents as gc
+from state.states import GameState, ActionState
  
 class Button():
     def __init__(self, text, x, y, width, height, font=None, hover_color=(150, 150, 255)):
@@ -40,7 +37,7 @@ class Button():
         click_sound.play()
 
 class ForceArrow:
-    def __init__(self, origin: Vertex, destination: Vertex):
+    def __init__(self, origin: gc.Vertex, destination: gc.Vertex):
         self.origin = origin
         self.destination = destination
 
@@ -56,15 +53,13 @@ class ForceArrow:
 
         arrow_rotated.blit(surface, arrow_rotated.get_rect(center=self.center_coords))
 
-#TODO: The state functionality needs lots of cleaning up. I might redo all this...
-
 class Game:
     def __init__(self) -> None:
         pygame.init()
         # load and set the logo
         logo = pygame.image.load(IMAGES_PATH / "logo32x32.png")
         pygame.display.set_icon(logo)
-        pygame.display.set_caption("minimal program")
+        pygame.display.set_caption("Zq forcing game")
         
         # create a surface on screen 
         self.DISPLAY_SURF = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
@@ -75,7 +70,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.dt = 0
 
-        self.g = GameGraph()
+        self.g = gc.GameGraph()
         self.particles = []
         self.tokens = 0
         self.font = pygame.font.SysFont("Arial", 30)
@@ -112,7 +107,7 @@ class Game:
             # Open file selection dialog to choose file containing graph
             tkinter.Tk().withdraw()
             filename = askopenfilename(initialdir=GRAPHS_PATH)
-            self.g = GameGraph()
+            self.g = gc.GameGraph()
             self.g.load_from_file(filename)
             self.g.game = self
             self.game_state = GameState.GAME
@@ -120,10 +115,9 @@ class Game:
         elif self.game_state == GameState.GAME:
             # This is the game state representing the game being played
             # Action state tells us what action is being taken - rule 1, rule 2, etc.
-            if self.action_state == ActionState.RULE_1:
-                for event in self.events:
-                    # Detect clicks
-                    if event.type == pygame.MOUSEBUTTONUP:
+            for event in self.events:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if self.action_state == ActionState.RULE_1:
                         for vertex in self.g.nodes:
                             if vertex.hovered and not vertex.is_filled:
                                 self.tokens += 1
@@ -131,18 +125,16 @@ class Game:
                         if self.rule_3_button.hovered:
                             self.action_state = ActionState.RULE_3_BLUE
                             self.rule_3_button.click()
-                        if self.reset_button.hovered:
-                            self.reset_button.click()
-                            for vertex in self.g.nodes:
-                                vertex.is_filled = False
-                                vertex.has_forced = False
-                                self.tokens = 0
-            elif self.action_state == ActionState.RULE_3_BLUE:
-                for event in self.events:
-                    if event.type == pygame.MOUSEBUTTONUP:
+                    elif self.action_state == ActionState.RULE_3_BLUE:
                         if self.rule_3_button.hovered:
                             self.action_state = ActionState.RULE_1
                             self.rule_3_button.click()
+                    if self.reset_button.hovered:
+                        self.reset_button.click()
+                        for vertex in self.g.nodes:
+                            vertex.is_filled = False
+                            vertex.has_forced = False
+                            self.tokens = 0
         
         for event in self.events:
             if event.type == pygame.QUIT:
@@ -194,18 +186,7 @@ class Game:
         '''Tick the clock for pygame, updating self.dt'''
         self.dt = self.clock.tick(60)
 
-class GameState(Enum):
-    MENU = auto()
-    INSTRUCTIONS = auto()
-    CHOOSE_FILE = auto()
-    GAME = auto()
-    GAME_OVER = auto()
 
-class ActionState(Enum):
-    RULE_1 = auto()
-    RULE_3_BLUE = auto()
-    RULE_3_WHITE = auto()
-    RULE_3_FORCE = auto()
 
 #############################################################
   
