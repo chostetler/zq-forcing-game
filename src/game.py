@@ -110,6 +110,7 @@ def main():
 
     start_game_button = Button('Start', 50, 300, 100, 50)
     rule_3_button = Button('Rule 3', 500, 400, 100, 50)
+    reset_button = Button('Reset', 500, 500, 100, 50)
 
     # main loop
     while running:
@@ -150,6 +151,11 @@ def main():
                         if rule_3_button.hovered:
                             action_state = ActionState.RULE_3_BLUE
                             rule_3_button.click()
+                        if reset_button.hovered:
+                            reset_button.click()
+                            for vertex in g.nodes:
+                                vertex.is_filled = False
+                                tokens = 0
             elif action_state == ActionState.RULE_3_BLUE:
                 for event in events:
                     if event.type == pygame.MOUSEBUTTONUP:
@@ -169,8 +175,11 @@ def main():
             for vertex in g.nodes:
                 vertex.update(dt)
                 vertex.draw(DISPLAY_SURF)
+
             rule_3_button.update()
             rule_3_button.draw(DISPLAY_SURF)
+            reset_button.update()
+            reset_button.draw(DISPLAY_SURF)
 
             g.update(dt)
 
