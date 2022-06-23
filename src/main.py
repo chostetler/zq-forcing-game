@@ -135,7 +135,6 @@ class Game:
                                     self.g.selected_connected_components.remove(component)
                                 else:
                                     self.g.selected_connected_components.append(component)
-                                print(self.g.selected_connected_components)
                     if self.reset_button.hovered:
                         self.reset_button.click()
                         self.g.selected_connected_components = []

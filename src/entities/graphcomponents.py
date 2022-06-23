@@ -66,7 +66,7 @@ class Vertex:
         self.graph: GameGraph = graph
 
     def turn_blue(self):
-        self.force_time = pygame.time.get_ticks() + 250
+        self.force_time = pygame.time.get_ticks() + TIME_BETWEEN_AUTOFORCE
         bubble_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bubble.wav')
         bubble_sound.play()
         self.is_filled = True
@@ -74,7 +74,7 @@ class Vertex:
         self.graph.game.particles.append(particle)
 
     def update(self, dt=60):
-        if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced:
+        if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced and AUTOFORCE_ENABLED:
             self.graph.do_forces()
             self.has_forced = True
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
@@ -130,10 +130,13 @@ class GameGraph(nx.Graph):
             self.selected_connected_components = []
 
     def do_forces(self):
+        to_be_forced = []
         for vertex in self.filled_vertices:
             neighbors = [v for v in nx.neighbors(self, vertex) if not v.is_filled]
             if len(neighbors) == 1:
-                neighbors[0].turn_blue()
+                to_be_forced.append(neighbors[0])
+        for vertex in to_be_forced:
+            vertex.turn_blue()
 
     def vertices_in_selected_connected_components(self):
         vertices = []
