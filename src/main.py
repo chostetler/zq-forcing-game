@@ -79,8 +79,8 @@ class Game:
         self.font = pygame.font.SysFont("Arial", 30)
 
         self.start_game_button = Button('Start', 50, 300, 100, 50)
-        self.rule_3_button = Button('Rule 3', 500, 400, 100, 50)
-        self.reset_button = Button('Reset', 500, 500, 100, 50)
+        self.rule_3_button = Button('Rule 3', 500, 480, 100, 50)
+        self.reset_button = Button('Reset', 500, 550, 100, 50)
 
     def game_loop(self) -> None:
         self.handle_events()
