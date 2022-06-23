@@ -65,8 +65,11 @@ class GraphCreatorGame(main.Game):
 
         tkinter.Tk().withdraw()
         f = tkinter.filedialog.asksaveasfile(initialfile='untitled.json', initialdir=USER_GRAPHS_PATH, mode='w', defaultextension=".json")
-        f.write(json.dumps(graph_dict))
-        f.close()
+        try:
+            f.write(json.dumps(graph_dict))
+            f.close()
+        except:
+            print("Couldn't write to file")
 
 if __name__=="__main__":
     # call the main function
