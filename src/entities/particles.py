@@ -8,7 +8,7 @@ class ClickParticle:
 
     alpha_rate = 255/400
 
-    def __init__(self, x, y, base_color=FILLED_COLOR, radius=DEFAULT_VERTEX_RADIUS, time_offset=0):
+    def __init__(self, x, y, base_color=FILLED_COLOR, radius=DEFAULT_VERTEX_RADIUS):
         self.x = x
         self.y = y
         self.color = base_color
@@ -17,21 +17,15 @@ class ClickParticle:
         self.is_alive = True
         self.alpha = 255
 
-        self.start_time = pygame.time.get_ticks()+time_offset
         self.has_started = False
 
     def update_pos(self, dt):
-        if pygame.time.get_ticks() >= self.start_time:
-            if not self.has_started:
-                bubble_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bubble.wav')
-                bubble_sound.play()
-            self.has_started = True
-            self.radius = self.radius + ClickParticle.growth_rate*dt
-            self.alpha = max(0, self.alpha - ClickParticle.alpha_rate*dt)
-            self.color.a = math.floor(self.alpha)
+        self.radius = self.radius + ClickParticle.growth_rate*dt
+        self.alpha = max(0, self.alpha - ClickParticle.alpha_rate*dt)
+        self.color.a = math.floor(self.alpha)
 
-            if self.radius > ClickParticle.max_radius or self.alpha <= 0:
-                self.is_alive = False
+        if self.radius > ClickParticle.max_radius or self.alpha <= 0:
+            self.is_alive = False
 
     def draw(self, surface):
         width = 5

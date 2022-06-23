@@ -59,11 +59,11 @@ class Vertex:
 
     def turn_blue(self):
         self.force_time = pygame.time.get_ticks() + 250
-        try:
-            self.is_filled = True
-            # spawn_particle(ClickParticle(self.x, self.y, FILLED_COLOR, self.radius, time_offset))
-        except:
-            print("Couldn't turn blue. Did you remember to link_graph()?")
+        bubble_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bubble.wav')
+        bubble_sound.play()
+        self.is_filled = True
+        particle = ClickParticle(self.x, self.y, FILLED_COLOR, self.radius)
+        self.graph.game_data['particles'].append(particle)
 
     def update(self, dt=60):
         if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced:
@@ -72,8 +72,9 @@ class Vertex:
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
 class GameGraph(nx.Graph):
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, game_data={}):
         super().__init__()
+        self.game_data = game_data
         self.edge_objects = []
         if filename is not None:
             self.load_from_file(filename)

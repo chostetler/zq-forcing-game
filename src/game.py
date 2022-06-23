@@ -80,7 +80,7 @@ def spawn_particle(particle):
 
 # define a main function
 def main():
-    
+    game_data = {}
     # initialize the pygame module
     pygame.init()
     # load and set the logo
@@ -98,6 +98,9 @@ def main():
     dt = 0
 
     g = GameGraph()
+
+    game_data['graph'] = g
+    game_data['particles'] = []
 
     tokens = 0
     font = pygame.font.SysFont("Arial", 30)
@@ -130,6 +133,7 @@ def main():
             filename = askopenfilename(initialdir=GRAPHS_PATH)
             g = GameGraph()
             g.load_from_file(filename)
+            g.game_data = game_data
             game_state = GameState.GAME
 
         elif game_state == GameState.GAME:
@@ -154,11 +158,11 @@ def main():
                             rule_3_button.click()
 
             # Update and draw particles, edges, vertices, and buttons
-            for particle in particles:
+            for particle in game_data['particles']:
                 particle.update_pos(dt)
                 particle.draw(DISPLAY_SURF)
                 if not particle.is_alive:
-                    particles.remove(particle)
+                    game_data['particles'].remove(particle)
             for edge in g.edge_objects:
                 edge.update(dt)
                 edge.draw(DISPLAY_SURF)
