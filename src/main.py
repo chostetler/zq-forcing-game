@@ -37,7 +37,7 @@ class Button():
         click_sound.play()
 
 class ForceArrow:
-    def __init__(self, origin: gc.Vertex, destination: gc.Vertex):
+    def __init__(self, origin: 'gc.Vertex', destination: 'gc.Vertex'):
         self.origin = origin
         self.destination = destination
 
@@ -70,13 +70,13 @@ class Game:
         self.clock = pygame.time.Clock()
         self.dt = 0
 
-        self.g = gc.GameGraph()
+        self.game_state = GameState.MENU
+        self.action_state = ActionState.RULE_1
+
+        self.g = gc.GameGraph(parent_game=self)
         self.particles = []
         self.tokens = 0
         self.font = pygame.font.SysFont("Arial", 30)
-
-        self.game_state = GameState.MENU
-        self.action_state = ActionState.RULE_1
 
         self.start_game_button = Button('Start', 50, 300, 100, 50)
         self.rule_3_button = Button('Rule 3', 500, 400, 100, 50)
@@ -107,9 +107,8 @@ class Game:
             # Open file selection dialog to choose file containing graph
             tkinter.Tk().withdraw()
             filename = askopenfilename(initialdir=GRAPHS_PATH)
-            self.g = gc.GameGraph()
+            self.g = gc.GameGraph(parent_game=self)
             self.g.load_from_file(filename)
-            self.g.game = self
             self.game_state = GameState.GAME
 
         elif self.game_state == GameState.GAME:
@@ -129,8 +128,17 @@ class Game:
                         if self.rule_3_button.hovered:
                             self.action_state = ActionState.RULE_1
                             self.rule_3_button.click()
+                        for vertex in self.g.nodes:
+                            if vertex.hovered and not vertex.is_filled:
+                                component = self.g.connected_component(vertex)
+                                if component in self.g.selected_connected_components:
+                                    self.g.selected_connected_components.remove(component)
+                                else:
+                                    self.g.selected_connected_components.append(component)
+                                print(self.g.selected_connected_components)
                     if self.reset_button.hovered:
                         self.reset_button.click()
+                        self.g.selected_connected_components = []
                         for vertex in self.g.nodes:
                             vertex.is_filled = False
                             vertex.has_forced = False

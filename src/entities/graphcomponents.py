@@ -1,6 +1,7 @@
 import pygame
 import networkx as nx
 import json
+import main
 from entities.particles import ClickParticle
 from config import *
 from state.states import GameState, ActionState
@@ -55,7 +56,9 @@ class Vertex:
             if self.hovered and not self.is_filled:
                 self.border_color = RULE_1_HOVER_COLOR
         elif self.graph.game.action_state == ActionState.RULE_3_BLUE:
-            if self in self.graph.hovered_connected_component:
+            if self.graph.connected_component(self) in self.graph.selected_connected_components:
+                self.border_color = RULE_3_SELECTED_COLOR
+            elif self in self.graph.hovered_connected_component:
                 self.border_color = RULE_3_HOVER_COLOR
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 
@@ -79,10 +82,11 @@ class Vertex:
 class GameGraph(nx.Graph):
     def __init__(self, filename=None, parent_game=None):
         super().__init__()
-        self.game = parent_game
+        self.game: 'main.Game' = parent_game
         self.edge_objects = []
         if filename is not None:
             self.load_from_file(filename)
+        self.selected_connected_components = set()
         self.update()
 
     def induced_subgraph(self, *args):
@@ -109,8 +113,8 @@ class GameGraph(nx.Graph):
                 self.add_edge(edge.origin, edge.destination)
                 self.edge_objects.append(edge)
 
-    def component_is_hovered(self, edge):
-        if edge not in self.nodes: return False
+    def component_is_hovered(self, vertex):
+        if vertex not in self.nodes: return False
 
     def update(self, dt=0):
         self.white_vertices = [vertex for vertex in self.nodes if not vertex.is_filled]
@@ -122,12 +126,26 @@ class GameGraph(nx.Graph):
             for vertex in cc:
                 if vertex.hovered:
                     self.hovered_connected_component = cc
+        if self.game.action_state == ActionState.RULE_1:
+            self.selected_connected_components = []
 
     def do_forces(self):
         for vertex in self.filled_vertices:
             neighbors = [v for v in nx.neighbors(self, vertex) if not v.is_filled]
             if len(neighbors) == 1:
                 neighbors[0].turn_blue()
+
+    def vertices_in_selected_connected_components(self):
+        vertices = []
+        for cc in self.selected_connected_components:
+            vertices += list(cc)
+        return vertices
+
+    def connected_component(self, vertex: Vertex):
+        for cc in self.connected_components_sets:
+            if vertex in cc:
+                return cc
+        return None
 
 
 
