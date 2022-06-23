@@ -65,7 +65,7 @@ class Vertex:
         bubble_sound.play()
         self.is_filled = True
         particle = ClickParticle(self.x, self.y, FILLED_COLOR, self.radius)
-        self.graph.game_data['particles'].append(particle)
+        self.graph.game.particles.append(particle)
 
     def update(self, dt=60):
         if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced:
