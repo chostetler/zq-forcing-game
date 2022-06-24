@@ -33,3 +33,6 @@ AUTOFORCE_ENABLED = True
 
 # Visual settings
 RENDER_VERTEX_LABELS = True
+
+# Various
+Q = 2

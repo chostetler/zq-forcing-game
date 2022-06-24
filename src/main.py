@@ -1,4 +1,5 @@
 # import the pygame module, so you can use it
+from argparse import Action
 import pygame
 import math
 import tkinter
@@ -9,7 +10,7 @@ import entities.graphcomponents as gc
 from state.states import GameState, ActionState
  
 class Button():
-    def __init__(self, text, x, y, width, height, font=None, hover_color=(150, 150, 255)):
+    def __init__(self, text, x, y, width, height, visible=True, font=None, hover_color=(150, 150, 255), enabled=True):
         self.text = text
         self.x = x
         self.y = y
@@ -20,6 +21,8 @@ class Button():
         self.draw_color = 'white'
         self.hovered = False
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.visible = visible
+        self.enabled = enabled
         self.surface = pygame.Surface(self.rect.size)
 
     def update(self, dt=60):
@@ -27,10 +30,11 @@ class Button():
         self.draw_color = self.hover_color if self.hovered else 'white'
 
     def render(self, surface: pygame.surface.Surface):
-        pygame.draw.rect(surface, self.draw_color, self.rect)
-        pygame.draw.rect(surface, 'black', self.rect, 4)
-        button_text = self.font.render(self.text, True, 'black')
-        surface.blit(button_text, (self.x+5, self.y+5))
+        if self.visible:
+            pygame.draw.rect(surface, self.draw_color, self.rect)
+            pygame.draw.rect(surface, 'black', self.rect, 4)
+            button_text = self.font.render(self.text, True, 'black')
+            surface.blit(button_text, (self.x+5, self.y+5))
 
     def click(self):
         click_sound = pygame.mixer.Sound(SOUNDS_PATH / 'menu-bip.wav')
@@ -85,6 +89,7 @@ class Game:
         self.rule_3_blue_confirm_button = Button('Confirm', 160, 500, 100, 50)
         self.rule_3_white_confirm_button = Button('Confirm', 160, 500, 100, 50)
         self.rule_3_done_button = Button('Done', 50, 500, 100, 50)
+        self.buttons = [self.start_game_button, self.reset_button, self.rule_3_button, self.rule_3_cancel_button, self.rule_3_blue_confirm_button, self.rule_3_white_confirm_button, self.rule_3_done_button]
 
 
     def game_loop(self) -> None:
@@ -130,9 +135,6 @@ class Game:
                             self.action_state = ActionState.RULE_3_BLUE
                             self.rule_3_button.click()
                     elif self.action_state == ActionState.RULE_3_BLUE:
-                        if self.rule_3_button.hovered:
-                            self.action_state = ActionState.RULE_1
-                            self.rule_3_button.click()
                         for vertex in self.g.nodes:
                             if vertex.hovered and not vertex.is_filled:
                                 component = self.g.connected_component(vertex)
@@ -140,9 +142,24 @@ class Game:
                                     self.g.selected_connected_components.remove(component)
                                 else:
                                     self.g.selected_connected_components.append(component)
+                        if self.rule_3_cancel_button.hovered:
+                            self.rule_3_cancel_button.click()
+                            self.action_state = ActionState.RULE_1
+                        if self.rule_3_blue_confirm_button.hovered:
+                            if len(self.g.selected_connected_components) > Q:
+                                self.action_state = ActionState.RULE_3_WHITE
+                                pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
+                                pass_sound.play()
+                            else:
+                                error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
+                                error_sound.play()
+                    elif self.action_state == ActionState.RULE_3_WHITE:
+                        pass
+
                     if self.reset_button.hovered:
                         self.reset_button.click()
                         self.g.selected_connected_components = []
+                        self.action_state = ActionState.RULE_1
                         for vertex in self.g.nodes:
                             vertex.is_filled = False
                             vertex.has_forced = False
