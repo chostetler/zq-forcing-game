@@ -79,8 +79,13 @@ class Game:
         self.font = pygame.font.SysFont("Arial", 30)
 
         self.start_game_button = Button('Start', 50, 300, 100, 50)
-        self.rule_3_button = Button('Rule 3', 500, 480, 100, 50)
         self.reset_button = Button('Reset', 500, 550, 100, 50)
+        self.rule_3_button = Button('Rule 3', 500, 480, 100, 50)
+        self.rule_3_cancel_button = Button('Cancel', 50, 500, 100, 50)
+        self.rule_3_blue_confirm_button = Button('Confirm', 160, 500, 100, 50)
+        self.rule_3_white_confirm_button = Button('Confirm', 160, 500, 100, 50)
+        self.rule_3_done_button = Button('Done', 50, 500, 100, 50)
+
 
     def game_loop(self) -> None:
         self.handle_events()
@@ -160,6 +165,10 @@ class Game:
         self.rule_3_button.update()
         self.reset_button.update()
         self.start_game_button.update()
+        self.rule_3_blue_confirm_button.update()
+        self.rule_3_cancel_button.update()
+        self.rule_3_white_confirm_button.update()
+        self.rule_3_done_button.update()
         self.g.update(self.dt)
 
     def render(self) -> None:
@@ -178,8 +187,18 @@ class Game:
                 edge.render(self.DISPLAY_SURF)
             for vertex in self.g.nodes:
                 vertex.render(self.DISPLAY_SURF)
-            self.rule_3_button.render(self.DISPLAY_SURF)
+
             self.reset_button.render(self.DISPLAY_SURF)
+            if self.action_state == ActionState.RULE_1:
+                self.rule_3_button.render(self.DISPLAY_SURF)
+            elif self.action_state == ActionState.RULE_3_BLUE:
+                self.rule_3_blue_confirm_button.render(self.DISPLAY_SURF)
+                self.rule_3_cancel_button.render(self.DISPLAY_SURF)
+            elif self.action_state == ActionState.RULE_3_WHITE:
+                self.rule_3_white_confirm_button.render(self.DISPLAY_SURF)
+            elif self.action_state == ActionState.RULE_3_FORCE:
+                self.rule_3_done_button.render(self.DISPLAY_SURF)
+
             self.tokens_surface = self.font.render('Tokens: '+str(self.tokens), True, (0,0,0))
             self.DISPLAY_SURF.blit(self.tokens_surface, (20, 20))
 
