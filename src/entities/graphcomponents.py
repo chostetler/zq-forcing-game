@@ -1,3 +1,4 @@
+from telnetlib import GA
 import pygame
 import networkx as nx
 import json
@@ -8,18 +9,26 @@ from state.states import GameState, ActionState
 
 class Edge:
     def __init__(self, origin, destination):
-        self.origin = origin
-        self.destination = destination
+        self.origin: Vertex = origin
+        self.destination: Vertex = destination
         self.hovered = False
+        self.visible = True
 
     def render(self, surface):
         if self.hovered:
             pass
-        pygame.draw.line(surface, pygame.color.Color('black'), (self.origin.x, self.origin.y), (self.destination.x, self.destination.y))
-        pass
+        if self.visible:
+            self.render_color = 'black'
+            if self.graph.game.action_state == ActionState.RULE_3_BLUE:
+                if self.origin.component_hovered or self.destination.component_hovered:
+                    self.render_color = RULE_3_HOVER_COLOR
+                elif self.origin.component_selected or self.destination.component_selected:
+                    self.render_color = RULE_3_SELECTED_COLOR
+            pygame.draw.line(surface, self.render_color, (self.origin.x, self.origin.y), (self.destination.x, self.destination.y))
+
 
     def link_graph(self, graph):
-        self.graph = graph
+        self.graph: GameGraph = graph
 
     def update(self, dt=60):
         pass
@@ -40,6 +49,7 @@ class Vertex:
         self.rect = pygame.Rect(x-radius, y-radius, radius*2, radius*2)
         self.hovered = False
         self.highlighted = False
+        self.visible = True
 
         self.has_forced = False
         self.force_time = 0
@@ -48,6 +58,7 @@ class Vertex:
         self.label_font = pygame.font.SysFont("Arial", 20)
 
     def render(self, surface):
+        if not self.visible: return None
         if self.is_filled:
             self.color = FILLED_COLOR
         else:
@@ -59,10 +70,10 @@ class Vertex:
             if self.hovered and not self.is_filled:
                 self.border_color = RULE_1_HOVER_COLOR
         elif self.graph.game.action_state == ActionState.RULE_3_BLUE:
-            if self.graph.connected_component(self) in self.graph.selected_connected_components:
-                self.border_color = RULE_3_SELECTED_COLOR
-            elif self in self.graph.hovered_connected_component:
+            if self.component_hovered:
                 self.border_color = RULE_3_HOVER_COLOR
+            elif self.component_selected:
+                self.border_color = RULE_3_SELECTED_COLOR
 
         if RENDER_VERTEX_LABELS:
             label_text = self.label_font.render(str(self.id), True, 'black')
@@ -86,6 +97,8 @@ class Vertex:
             self.graph.do_forces()
             self.has_forced = True
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
+        self.component_hovered = self in self.graph.hovered_connected_component
+        self.component_selected = self.graph.connected_component(self) in self.graph.selected_connected_components
 
 class GameGraph(nx.Graph):
     def __init__(self, filename=None, parent_game=None):

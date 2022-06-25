@@ -10,7 +10,7 @@ import entities.graphcomponents as gc
 from state.states import GameState, ActionState
  
 class Button():
-    def __init__(self, text, x, y, width, height, visible=True, font=None, hover_color=(150, 150, 255), enabled=True):
+    def __init__(self, text, x, y, width, height, visible=True, font=None, hover_color=(150, 150, 255), enabled=True, visible_states=[s.value for s in ActionState]):
         self.text = text
         self.x = x
         self.y = y
@@ -82,8 +82,10 @@ class Game:
         self.tokens = 0
         self.font = pygame.font.SysFont("Arial", 30)
 
+        self.token_vertices = []
+
         self.start_game_button = Button('Start', 50, 300, 100, 50)
-        self.reset_button = Button('Reset', 500, 550, 100, 50)
+        self.reset_button = Button('Reset', 500, 550, 100, 50, visible_states=[ActionState.RULE_1, ActionState.RULE_3_BLUE, ActionState.RULE_3_FORCE])
         self.rule_3_button = Button('Rule 3', 500, 480, 100, 50)
         self.rule_3_cancel_button = Button('Cancel', 50, 500, 100, 50)
         self.rule_3_blue_confirm_button = Button('Confirm', 160, 500, 100, 50)
@@ -126,26 +128,40 @@ class Game:
             # Action state tells us what action is being taken - rule 1, rule 2, etc.
             for event in self.events:
                 if event.type == pygame.MOUSEBUTTONUP:
+                    # Figure out what object got clicked
+                    clicked_object = None
+                    for edge in self.g.edge_objects:
+                        if edge.hovered and edge.visible: clicked_object = edge
+                    for vertex in self.g.nodes:
+                        if vertex.hovered and vertex.visible: clicked_object = vertex
+                    for button in self.buttons:
+                        if button.hovered and button.visible: clicked_object = button
+                    
+
                     if self.action_state == ActionState.RULE_1:
-                        for vertex in self.g.nodes:
-                            if vertex.hovered and not vertex.is_filled:
+                        if clicked_object in self.g.nodes:
+                            vertex = clicked_object
+                            if not vertex.is_filled:
                                 self.tokens += 1
                                 vertex.turn_blue()
-                        if self.rule_3_button.hovered:
+                                self.token_vertices.append(vertex)
+                                print(self.token_vertices)
+                        if clicked_object is self.rule_3_button:
                             self.action_state = ActionState.RULE_3_BLUE
                             self.rule_3_button.click()
                     elif self.action_state == ActionState.RULE_3_BLUE:
-                        for vertex in self.g.nodes:
-                            if vertex.hovered and not vertex.is_filled:
+                        if clicked_object in self.g.nodes:
+                            vertex = clicked_object
+                            if not vertex.is_filled:
                                 component = self.g.connected_component(vertex)
                                 if component in self.g.selected_connected_components:
                                     self.g.selected_connected_components.remove(component)
                                 else:
                                     self.g.selected_connected_components.append(component)
-                        if self.rule_3_cancel_button.hovered:
+                        if clicked_object is self.rule_3_cancel_button:
                             self.rule_3_cancel_button.click()
                             self.action_state = ActionState.RULE_1
-                        if self.rule_3_blue_confirm_button.hovered:
+                        if clicked_object is self.rule_3_blue_confirm_button:
                             if len(self.g.selected_connected_components) > Q:
                                 self.action_state = ActionState.RULE_3_WHITE
                                 pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
@@ -154,11 +170,13 @@ class Game:
                                 error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
                                 error_sound.play()
                     elif self.action_state == ActionState.RULE_3_WHITE:
-                        pass
+                        if clicked_object is self.rule_3_white_confirm_button:
+                            pass
 
-                    if self.reset_button.hovered:
+                    if clicked_object is self.reset_button:
                         self.reset_button.click()
                         self.g.selected_connected_components = []
+                        self.token_vertices = []
                         self.action_state = ActionState.RULE_1
                         for vertex in self.g.nodes:
                             vertex.is_filled = False
@@ -179,13 +197,8 @@ class Game:
             edge.update(self.dt)
         for vertex in self.g.nodes:
             vertex.update(self.dt)
-        self.rule_3_button.update()
-        self.reset_button.update()
-        self.start_game_button.update()
-        self.rule_3_blue_confirm_button.update()
-        self.rule_3_cancel_button.update()
-        self.rule_3_white_confirm_button.update()
-        self.rule_3_done_button.update()
+        for button in self.buttons:
+            button.update()
         self.g.update(self.dt)
 
     def render(self) -> None:
@@ -204,6 +217,11 @@ class Game:
                 edge.render(self.DISPLAY_SURF)
             for vertex in self.g.nodes:
                 vertex.render(self.DISPLAY_SURF)
+
+            for vertex in self.token_vertices:
+                token_image = pygame.image.load(IMAGES_PATH / 'token.png')
+                token_image.blit(self.DISPLAY_SURF, token_image.get_rect(center=(vertex.x-30, vertex.y+30)))
+
 
             self.reset_button.render(self.DISPLAY_SURF)
             if self.action_state == ActionState.RULE_1:
