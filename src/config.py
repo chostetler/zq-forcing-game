@@ -34,6 +34,7 @@ AUTOFORCE_ENABLED = False
 # Visual settings
 RENDER_VERTEX_LABELS = True
 RENDER_VERTEX_TOKENS = True
+SHOW_RULE_3_INSTRUCTIONS = True
 
 # Various
 Q = 1
