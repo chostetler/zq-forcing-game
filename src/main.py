@@ -131,7 +131,7 @@ class Game:
                     # Figure out what object got clicked
                     clicked_object = None
                     for edge in self.g.edge_objects:
-                        if edge.hovered and edge.visible: clicked_object = edge
+                        if edge.hovered and edge.visible and edge.is_forceable: clicked_object = edge
                     for vertex in self.g.nodes:
                         if vertex.hovered and vertex.visible: clicked_object = vertex
                     for button in self.buttons:
@@ -228,6 +228,12 @@ class Game:
             self.reset_button.visible = True
             if self.action_state == ActionState.RULE_1:
                 self.rule_3_button.visible = True
+                for vertex in self.g.nodes:
+                    if vertex.hovered and not vertex.is_filled:
+                        token_image = pygame.transform.scale(pygame.image.load(IMAGES_PATH / 'token.png'), (15, 15))
+                        token_pos = (pygame.mouse.get_pos()[0]+10, pygame.mouse.get_pos()[1]-5)
+                        self.DISPLAY_SURF.blit(token_image, token_image.get_rect(center=token_pos))
+
             elif self.action_state == ActionState.RULE_3_BLUE:
                 if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('1. BLUE: select ' + str(Q+1) +' or more components', True, RULE_3_SELECTED_COLOR), (200, 0))
                 self.rule_3_blue_confirm_button.visible = True

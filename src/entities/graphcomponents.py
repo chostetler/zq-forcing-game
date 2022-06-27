@@ -46,7 +46,7 @@ class Edge:
         mouse_x, mouse_y = pygame.mouse.get_pos()
         mouse_path_distance = math.sqrt((self.origin.x-mouse_x)**2 + (self.origin.y-mouse_y)**2) + math.sqrt((self.destination.x-mouse_x)**2 + (self.destination.y-mouse_y)**2)
         direct_distance = math.sqrt((self.origin.x-self.destination.x)**2 + (self.origin.y-self.destination.y)**2)
-        if mouse_path_distance <= direct_distance*1.05:
+        if mouse_path_distance <= direct_distance*1.02:
             self.hovered = True
         else:
             self.hovered = False
