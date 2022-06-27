@@ -139,7 +139,6 @@ class Vertex:
         self.is_filled = True
         particle = ClickParticle(self.x, self.y, FILLED_COLOR, self.radius)
         self.graph.game.particles.append(particle)
-        self.graph.update_connected_components()
 
     def update(self, dt=60):
         if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced and AUTOFORCE_ENABLED:
@@ -212,6 +211,7 @@ class GameGraph(nx.Graph):
         # print(self.hovered_connected_component.vertices)
         if self.game.action_state == ActionState.RULE_1:
             self.blue_selection = Selection(self)
+            self.white_selection = Selection(self)
 
     def update_connected_components(self):
         '''Update the list of connected components of the graph. This should only be run when the color of a vertex changes'''
@@ -228,12 +228,6 @@ class GameGraph(nx.Graph):
                 to_be_forced.append(neighbors[0])
         for vertex in to_be_forced:
             vertex.turn_blue()
-
-    # def vertices_in_selected_connected_components(self):
-    #     vertices = []
-    #     for cc in self.selected_connected_components:
-    #         vertices += list(cc.vertices)
-    #     return vertices
 
     def connected_component(self, vertex: Vertex):
         for cc in self.connected_components:

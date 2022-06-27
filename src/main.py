@@ -159,14 +159,16 @@ class Game:
                     self.tokens += 1
                     vertex.turn_blue()
                     self.token_vertices.append(vertex)
-            if self.clicked_object is self.rule_3_button:
-                self.action_state = ActionState.RULE_3_BLUE
-                self.rule_3_button.click()
+                    self.g.update_connected_components()
             if self.clicked_object in self.g.edge_objects:
                 edge: gc.Edge = self.clicked_object
                 if edge.is_forceable:
                     edge.origin.turn_blue()
                     edge.destination.turn_blue()
+                    self.g.update_connected_components()
+            if self.clicked_object is self.rule_3_button:
+                self.action_state = ActionState.RULE_3_BLUE
+                self.rule_3_button.click()
 
         elif self.action_state == ActionState.RULE_3_BLUE:
             if self.clicked_object in self.g.nodes:
@@ -215,6 +217,7 @@ class Game:
                     edge.destination.turn_blue()
             if self.clicked_object is self.rule_3_done_button:
                 self.action_state = ActionState.RULE_1
+                self.g.update_connected_components()
 
 
         if self.clicked_object is self.reset_button:
@@ -270,16 +273,18 @@ class Game:
                         self.DISPLAY_SURF.blit(token_image, token_image.get_rect(center=token_pos))
 
             elif self.action_state == ActionState.RULE_3_BLUE:
-                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('1. BLUE: select at least q+1 components (q='+str(Q)+')', True, RULE_3_SELECTED_COLOR), (200, 0))
+                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('1. BLUE: select at least q+1 components (q='+str(Q)+')', True, RULE_3_HOVER_COLOR), (200, 0))
                 self.rule_3_blue_confirm_button.visible = True
                 self.rule_3_cancel_button.visible = True
+                self.reset_button.visible = False
             elif self.action_state == ActionState.RULE_3_WHITE:
-                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('2. WHITE: select at least 1 component', True, RULE_3_SELECTED_COLOR), (200, 0))
+                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('2. WHITE: select at least 1 component', True, RULE_3_HOVER_COLOR), (200, 0))
                 self.rule_3_white_confirm_button.visible = True
                 self.reset_button.visible = False
             elif self.action_state == ActionState.RULE_3_FORCE:
-                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('3. BLUE: perform color forcing', True, RULE_3_SELECTED_COLOR), (200, 0))
+                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('3. BLUE: perform color forcing (if possible)', True, FILLED_COLOR), (200, 0))
                 self.rule_3_done_button.visible = True
+                self.reset_button.visible = False
 
             for button in self.buttons:
                 button.render(self.DISPLAY_SURF)
