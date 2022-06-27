@@ -57,7 +57,7 @@ class Vertex:
         self.border_color = 'black'
         self.label_font = pygame.font.SysFont("Arial", 20)
 
-    def render(self, surface):
+    def render(self, surface: pygame.Surface):
         if not self.visible: return None
         if self.is_filled:
             self.color = FILLED_COLOR
@@ -78,6 +78,11 @@ class Vertex:
         if RENDER_VERTEX_LABELS:
             label_text = self.label_font.render(str(self.id), True, 'black')
             surface.blit(label_text, (self.x+self.radius*.7, self.y+self.radius*.7))
+        
+        if RENDER_VERTEX_TOKENS and self in self.graph.game.token_vertices:
+            token_image = pygame.transform.scale(pygame.image.load(IMAGES_PATH / 'token.png'), (15, 15))
+            surface.blit(token_image, token_image.get_rect(center=(self.x, self.y + DEFAULT_VERTEX_RADIUS + 10)))
+            # token_image.blit(surface, token_image.get_rect(center=(self.x, self.y)))
 
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 

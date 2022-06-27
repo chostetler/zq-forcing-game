@@ -15,8 +15,8 @@ SOUNDS_PATH: Path = ASSETS_PATH / 'sounds'
 FILLED_COLOR: pygame.Color = pygame.Color('#5751FF')
 EMPTY_COLOR: pygame.Color = pygame.Color('white')
 RULE_1_HOVER_COLOR: pygame.Color = pygame.Color('cyan')
-RULE_3_HOVER_COLOR: pygame.Color = pygame.Color('#FFD65C')
-RULE_3_SELECTED_COLOR: pygame.Color = pygame.Color('#FF8F00')
+RULE_3_HOVER_COLOR: pygame.Color = pygame.Color('#FF8F00')
+RULE_3_SELECTED_COLOR: pygame.Color = pygame.Color('#FFD65C')
 
 # Coordinates/Dimensions
 WIN_WIDTH = 800
@@ -33,6 +33,7 @@ AUTOFORCE_ENABLED = True
 
 # Visual settings
 RENDER_VERTEX_LABELS = True
+RENDER_VERTEX_TOKENS = True
 
 # Various
 Q = 2

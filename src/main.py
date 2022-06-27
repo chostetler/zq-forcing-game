@@ -218,11 +218,6 @@ class Game:
             for vertex in self.g.nodes:
                 vertex.render(self.DISPLAY_SURF)
 
-            for vertex in self.token_vertices:
-                token_image = pygame.image.load(IMAGES_PATH / 'token.png')
-                token_image.blit(self.DISPLAY_SURF, token_image.get_rect(center=(vertex.x-30, vertex.y+30)))
-
-
             self.reset_button.render(self.DISPLAY_SURF)
             if self.action_state == ActionState.RULE_1:
                 self.rule_3_button.render(self.DISPLAY_SURF)
