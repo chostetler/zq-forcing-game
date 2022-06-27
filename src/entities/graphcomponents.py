@@ -23,10 +23,16 @@ class Edge:
             self.render_color = 'black'
             self.render_width = LINE_WIDTH_SMALL
             if self.graph.game.action_state == ActionState.RULE_3_BLUE:
-                if self.origin.component_hovered or self.destination.component_hovered:
+                if self.component_hovered:
                     self.render_color = RULE_3_HOVER_COLOR
-                elif self.origin.component_selected or self.destination.component_selected:
+                elif self.component_selected_blue:
                     self.render_color = RULE_3_SELECTED_COLOR
+            if self.graph.game.action_state == ActionState.RULE_3_WHITE:
+                if self.component_hovered:
+                    self.render_color = RULE_3_HOVER_COLOR
+                elif self.component_selected_white:
+                    self.render_color = RULE_3_SELECTED_COLOR
+
             if self.is_forceable:
                 self.green_value = 100 + 100 * math.sin(2*math.pi*self.animation_counter/700)
                 self.render_color = pygame.color.Color(0, round(self.green_value), 255)
@@ -50,6 +56,11 @@ class Edge:
             self.hovered = True
         else:
             self.hovered = False
+        self.component_selected_blue = self.origin.component_selected_blue or self.destination.component_selected_blue
+        self.component_selected_white = self.origin.component_selected_white or self.destination.component_selected_white
+        self.component_hovered = self.origin.component_hovered or self.destination.component_hovered
+
+        self.visible = self.origin.visible and self.destination.visible
         
 
 class Vertex:
@@ -76,6 +87,10 @@ class Vertex:
         self.border_color = 'black'
         self.label_font = pygame.font.SysFont("Arial", 20)
 
+        self.component_selected_blue = False
+        self.component_selected_white = False
+        self.component_hovered = False
+
     def __str__(self) -> str:
         return '<Vertex '+str(self.id) + '>'
 
@@ -94,8 +109,14 @@ class Vertex:
         elif self.graph.game.action_state == ActionState.RULE_3_BLUE:
             if self.component_hovered:
                 self.border_color = RULE_3_HOVER_COLOR
-            elif self.component_selected:
+            elif self.component_selected_blue:
                 self.border_color = RULE_3_SELECTED_COLOR
+        elif self.graph.game.action_state == ActionState.RULE_3_WHITE:
+            if self.component_hovered:
+                self.border_color = RULE_3_HOVER_COLOR
+            elif self.component_selected_white:
+                self.border_color = RULE_3_SELECTED_COLOR
+
 
         if RENDER_VERTEX_LABELS:
             label_text = self.label_font.render(str(self.id), True, 'black')
@@ -104,7 +125,6 @@ class Vertex:
         if RENDER_VERTEX_TOKENS and self in self.graph.game.token_vertices:
             token_image = pygame.transform.scale(pygame.image.load(IMAGES_PATH / 'token.png'), (15, 15))
             surface.blit(token_image, token_image.get_rect(center=(self.x, self.y + DEFAULT_VERTEX_RADIUS + 10)))
-            # token_image.blit(surface, token_image.get_rect(center=(self.x, self.y)))
 
         pygame.draw.circle(surface, self.border_color, (self.x, self.y), self.radius, self.linewidth)
 
@@ -127,7 +147,18 @@ class Vertex:
             self.has_forced = True
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
         self.component_hovered = self in self.graph.hovered_connected_component.vertices
-        self.component_selected = self.graph.connected_component(self) in self.graph.blue_selection.components
+        self.component_selected_blue = self.graph.connected_component(self) in self.graph.blue_selection.components
+        self.component_selected_white = self.graph.connected_component(self) in self.graph.white_selection.components
+
+        # Update visibility
+        if self.is_filled:
+            self.visible = True
+        elif self.graph.game.action_state == ActionState.RULE_3_WHITE and not self.component_selected_blue:
+            self.visible = False
+        elif self.graph.game.action_state == ActionState.RULE_3_FORCE and not self.component_selected_white:
+            self.visible = False
+        else:
+            self.visible = True
 
     def can_force(self, destination):
         return self.graph.can_force(self, destination)
@@ -211,9 +242,16 @@ class GameGraph(nx.Graph):
         return None
 
     def can_force(self, origin: Vertex, destination: Vertex):
+        active_subgraph: nx.Graph = nx.Graph(self.edges)
+        if self.game.action_state == ActionState.RULE_1:
+            pass
+        elif self.game.action_state == ActionState.RULE_3_FORCE:
+            active_subgraph = nx.subgraph(active_subgraph, self.filled_vertices + self.white_selection.get_all_vertices())
+        else:
+            return False
         if origin not in self.filled_vertices: return False
-        neighbors = [v for v in nx.neighbors(self, origin) if not v.is_filled]
-        if len(neighbors) == 1 and destination in neighbors:
+        neighbors = [v for v in nx.neighbors(active_subgraph, origin) if not v.is_filled]
+        if len(neighbors) == 1 and destination in neighbors and destination in active_subgraph.nodes:
             return True
 class Selection:
     '''Represents a selection of white vertex components chosen by Blue or White'''
@@ -223,10 +261,19 @@ class Selection:
         self.component_representative_vertices = []
 
     def get_all_vertices(self):
-        pass
+        vertex_list = []
+        for component in self.components:
+            for vertex in component.vertices:
+                vertex_list.append(vertex)
+        return vertex_list
 
     def get_all_edges(self):
-        pass
+        edge_list = []
+        vertex_list = self.get_all_vertices()
+        for edge in self.graph.edge_objects:
+            if edge.origin in vertex_list and edge.destination in vertex_list:
+                edge_list.append(edge)
+        return edge_list
         
 class ConnectedComponent:
     def __init__(self, graph: GameGraph, vertices: Vertex) -> None:

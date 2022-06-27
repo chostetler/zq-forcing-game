@@ -104,6 +104,8 @@ class Game:
     def handle_events(self):
         '''Handle events provided by pygame'''
         self.events = pygame.event.get()
+        self.clicked_object = None
+        self.clicked_objects = []
 
         if self.game_state == GameState.MENU:
             title_text = self.font.render('Zero Forcing Game', True, 'black')
@@ -133,63 +135,15 @@ class Game:
             for event in self.events:
                 if event.type == pygame.MOUSEBUTTONUP:
                     # Figure out what object got clicked
-                    clicked_object = None
                     for edge in self.g.edge_objects:
-                        if edge.hovered and edge.visible and edge.is_forceable: clicked_object = edge
+                        if edge.hovered and edge.visible and edge.is_forceable: self.clicked_objects.append(edge)
                     for vertex in self.g.nodes:
-                        if vertex.hovered and vertex.visible: clicked_object = vertex
+                        if vertex.hovered and vertex.visible: self.clicked_objects.append(vertex)
                     for button in self.buttons:
-                        if button.hovered and button.visible: clicked_object = button
+                        if button.hovered and button.visible: self.clicked_objects.append(button)
                     
-
-                    if self.action_state == ActionState.RULE_1:
-                        if clicked_object in self.g.nodes:
-                            vertex = clicked_object
-                            if not vertex.is_filled:
-                                self.tokens += 1
-                                vertex.turn_blue()
-                                self.token_vertices.append(vertex)
-                        if clicked_object is self.rule_3_button:
-                            self.action_state = ActionState.RULE_3_BLUE
-                            self.rule_3_button.click()
-                        if clicked_object in self.g.edge_objects:
-                            edge: gc.Edge = clicked_object
-                            if edge.is_forceable:
-                                edge.origin.turn_blue()
-                                edge.destination.turn_blue()
-                    elif self.action_state == ActionState.RULE_3_BLUE:
-                        if clicked_object in self.g.nodes:
-                            vertex = clicked_object
-                            if not vertex.is_filled:
-                                component = self.g.connected_component(vertex)
-                                if component in self.g.blue_selection.components:
-                                    self.g.blue_selection.components.remove(component)
-                                else:
-                                    self.g.blue_selection.components.append(component)
-                        if clicked_object is self.rule_3_cancel_button:
-                            self.rule_3_cancel_button.click()
-                            self.action_state = ActionState.RULE_1
-                        if clicked_object is self.rule_3_blue_confirm_button:
-                            if len(self.g.blue_selection.components) > Q:
-                                self.action_state = ActionState.RULE_3_WHITE
-                                pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
-                                pass_sound.play()
-                            else:
-                                error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
-                                error_sound.play()
-                    elif self.action_state == ActionState.RULE_3_WHITE:
-                        if clicked_object is self.rule_3_white_confirm_button:
-                            pass
-
-                    if clicked_object is self.reset_button:
-                        self.reset_button.click()
-                        self.g.selected_connected_components = []
-                        self.token_vertices = []
-                        self.action_state = ActionState.RULE_1
-                        for vertex in self.g.nodes:
-                            vertex.is_filled = False
-                            vertex.has_forced = False
-                            self.tokens = 0
+                    if len(self.clicked_objects) >= 1:
+                        self.clicked_object = self.clicked_objects[-1]
         
         for event in self.events:
             if event.type == pygame.QUIT:
@@ -197,6 +151,83 @@ class Game:
 
     def update(self) -> None:
         '''Update game data'''
+        # First - deal with clicks
+        if self.action_state == ActionState.RULE_1:
+            if self.clicked_object in self.g.nodes:
+                vertex = self.clicked_object
+                if not vertex.is_filled:
+                    self.tokens += 1
+                    vertex.turn_blue()
+                    self.token_vertices.append(vertex)
+            if self.clicked_object is self.rule_3_button:
+                self.action_state = ActionState.RULE_3_BLUE
+                self.rule_3_button.click()
+            if self.clicked_object in self.g.edge_objects:
+                edge: gc.Edge = self.clicked_object
+                if edge.is_forceable:
+                    edge.origin.turn_blue()
+                    edge.destination.turn_blue()
+
+        elif self.action_state == ActionState.RULE_3_BLUE:
+            if self.clicked_object in self.g.nodes:
+                vertex = self.clicked_object
+                if not vertex.is_filled:
+                    component = self.g.connected_component(vertex)
+                    if component in self.g.blue_selection.components:
+                        self.g.blue_selection.components.remove(component)
+                    else:
+                        self.g.blue_selection.components.append(component)
+            if self.clicked_object is self.rule_3_cancel_button:
+                self.rule_3_cancel_button.click()
+                self.action_state = ActionState.RULE_1
+            if self.clicked_object is self.rule_3_blue_confirm_button:
+                if len(self.g.blue_selection.components) > Q:
+                    self.action_state = ActionState.RULE_3_WHITE
+                    pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
+                    pass_sound.play()
+                else:
+                    error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
+                    error_sound.play()
+
+        elif self.action_state == ActionState.RULE_3_WHITE:
+            if self.clicked_object in self.g.nodes:
+                vertex: gc.Vertex = self.clicked_object
+                if not vertex.is_filled:
+                    component = self.g.connected_component(vertex)
+                    if component in self.g.white_selection.components:
+                        self.g.white_selection.components.remove(component)
+                    else:
+                        self.g.white_selection.components.append(component)
+            if self.clicked_object is self.rule_3_white_confirm_button:
+                if len(self.g.white_selection.components) >= 1:
+                    self.action_state = ActionState.RULE_3_FORCE
+                    pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
+                    pass_sound.play()
+                else:
+                    error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
+                    error_sound.play()
+
+        elif self.action_state == ActionState.RULE_3_FORCE:
+            if self.clicked_object in self.g.edge_objects:
+                edge: gc.Edge = self.clicked_object
+                if edge.is_forceable:
+                    edge.origin.turn_blue()
+                    edge.destination.turn_blue()
+            if self.clicked_object is self.rule_3_done_button:
+                self.action_state = ActionState.RULE_1
+
+
+        if self.clicked_object is self.reset_button:
+            self.reset_button.click()
+            self.token_vertices = []
+            self.action_state = ActionState.RULE_1
+            for vertex in self.g.nodes:
+                vertex.is_filled = False
+                vertex.has_forced = False
+                self.tokens = 0
+            self.g.update_connected_components()
+
+        # Update positions of objects
         for particle in self.particles:
             particle.update_pos(self.dt)
             if not particle.is_alive:
