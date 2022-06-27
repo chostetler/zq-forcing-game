@@ -93,7 +93,11 @@ class Game:
         self.rule_3_done_button = Button('Done', 50, 500, 100, 50)
         self.buttons = [self.start_game_button, self.reset_button, self.rule_3_button, self.rule_3_cancel_button, self.rule_3_blue_confirm_button, self.rule_3_white_confirm_button, self.rule_3_done_button]
 
-
+        self.sounds = {}
+        self.sounds['menu-bip'] = pygame.mixer.Sound(SOUNDS_PATH / 'menu-bip.wav')
+        self.sounds['menu-bip-low'] = pygame.mixer.Sound(SOUNDS_PATH / 'menu-bip-low.wav')
+        self.sounds['whoosh'] = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
+        self.sounds['bwang'] = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
 
     def game_loop(self) -> None:
         self.handle_events()
@@ -177,19 +181,19 @@ class Game:
                     component = self.g.connected_component(vertex)
                     if component in self.g.blue_selection.components:
                         self.g.blue_selection.components.remove(component)
+                        self.sounds['menu-bip-low'].play()
                     else:
                         self.g.blue_selection.components.append(component)
+                        self.sounds['menu-bip'].play()
             if self.clicked_object is self.rule_3_cancel_button:
                 self.rule_3_cancel_button.click()
                 self.action_state = ActionState.RULE_1
             if self.clicked_object is self.rule_3_blue_confirm_button:
                 if len(self.g.blue_selection.components) > Q:
                     self.action_state = ActionState.RULE_3_WHITE
-                    pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
-                    pass_sound.play()
+                    self.sounds['whoosh'].play()
                 else:
-                    error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
-                    error_sound.play()
+                    self.sounds['bwang'].play()
 
         elif self.action_state == ActionState.RULE_3_WHITE:
             if self.clicked_object in self.g.nodes:
@@ -198,16 +202,16 @@ class Game:
                     component = self.g.connected_component(vertex)
                     if component in self.g.white_selection.components:
                         self.g.white_selection.components.remove(component)
+                        self.sounds['menu-bip-low'].play()
                     else:
                         self.g.white_selection.components.append(component)
+                        self.sounds['menu-bip'].play()
             if self.clicked_object is self.rule_3_white_confirm_button:
                 if len(self.g.white_selection.components) >= 1:
                     self.action_state = ActionState.RULE_3_FORCE
-                    pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
-                    pass_sound.play()
+                    self.sounds['whoosh'].play()
                 else:
-                    error_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bwang.wav')
-                    error_sound.play()
+                    self.sounds['bwang'].play()
 
         elif self.action_state == ActionState.RULE_3_FORCE:
             if self.clicked_object in self.g.edge_objects:
