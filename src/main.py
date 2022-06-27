@@ -145,10 +145,14 @@ class Game:
                                 self.tokens += 1
                                 vertex.turn_blue()
                                 self.token_vertices.append(vertex)
-                                print(self.token_vertices)
                         if clicked_object is self.rule_3_button:
                             self.action_state = ActionState.RULE_3_BLUE
                             self.rule_3_button.click()
+                        if clicked_object in self.g.edge_objects:
+                            edge: gc.Edge = clicked_object
+                            if edge.is_forceable:
+                                edge.origin.turn_blue()
+                                edge.destination.turn_blue()
                     elif self.action_state == ActionState.RULE_3_BLUE:
                         if clicked_object in self.g.nodes:
                             vertex = clicked_object

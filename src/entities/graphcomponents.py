@@ -31,6 +31,8 @@ class Edge:
                 self.green_value = 100 + 100 * math.sin(2*math.pi*self.animation_counter/700)
                 self.render_color = pygame.color.Color(0, round(self.green_value), 255)
                 self.render_width = 4
+                if self.hovered:
+                    self.render_color = 'red'
 
             pygame.draw.line(surface, self.render_color, (self.origin.x, self.origin.y), (self.destination.x, self.destination.y), self.render_width)
 
@@ -41,6 +43,13 @@ class Edge:
     def update(self, dt=60):
         self.is_forceable = self.origin.can_force(self.destination) or self.destination.can_force(self.origin)
         self.animation_counter += dt
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        mouse_path_distance = math.sqrt((self.origin.x-mouse_x)**2 + (self.origin.y-mouse_y)**2) + math.sqrt((self.destination.x-mouse_x)**2 + (self.destination.y-mouse_y)**2)
+        direct_distance = math.sqrt((self.origin.x-self.destination.x)**2 + (self.origin.y-self.destination.y)**2)
+        if mouse_path_distance <= direct_distance*1.05:
+            self.hovered = True
+        else:
+            self.hovered = False
         
 
 class Vertex:
@@ -100,6 +109,7 @@ class Vertex:
         self.graph: GameGraph = graph
 
     def turn_blue(self):
+        if self.is_filled: return None
         self.force_time = pygame.time.get_ticks() + TIME_BETWEEN_AUTOFORCE
         bubble_sound = pygame.mixer.Sound(SOUNDS_PATH / 'bubble.wav')
         bubble_sound.play()
