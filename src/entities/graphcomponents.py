@@ -3,6 +3,7 @@ import pygame
 import networkx as nx
 import json
 import main
+import math
 from entities.particles import ClickParticle
 from config import *
 from state.states import GameState, ActionState
@@ -13,25 +14,34 @@ class Edge:
         self.destination: Vertex = destination
         self.hovered = False
         self.visible = True
+        self.animation_counter = 0
 
     def render(self, surface):
         if self.hovered:
             pass
         if self.visible:
             self.render_color = 'black'
+            self.render_width = 2
             if self.graph.game.action_state == ActionState.RULE_3_BLUE:
                 if self.origin.component_hovered or self.destination.component_hovered:
                     self.render_color = RULE_3_HOVER_COLOR
                 elif self.origin.component_selected or self.destination.component_selected:
                     self.render_color = RULE_3_SELECTED_COLOR
-            pygame.draw.line(surface, self.render_color, (self.origin.x, self.origin.y), (self.destination.x, self.destination.y))
+            if self.is_forceable:
+                self.green_value = 100 + 100 * math.sin(2*math.pi*self.animation_counter/700)
+                self.render_color = pygame.color.Color(0, round(self.green_value), 255)
+                self.render_width = 4
+
+            pygame.draw.line(surface, self.render_color, (self.origin.x, self.origin.y), (self.destination.x, self.destination.y), self.render_width)
 
 
     def link_graph(self, graph):
         self.graph: GameGraph = graph
 
     def update(self, dt=60):
-        pass
+        self.is_forceable = self.origin.can_force(self.destination) or self.destination.can_force(self.origin)
+        self.animation_counter += dt
+        
 
 class Vertex:
     highlight_color = RULE_1_HOVER_COLOR
@@ -105,6 +115,8 @@ class Vertex:
         self.component_hovered = self in self.graph.hovered_connected_component
         self.component_selected = self.graph.connected_component(self) in self.graph.selected_connected_components
 
+    def can_force(self, destination):
+        return self.graph.can_force(self, destination)
 class GameGraph(nx.Graph):
     def __init__(self, filename=None, parent_game=None):
         super().__init__()
@@ -175,6 +187,12 @@ class GameGraph(nx.Graph):
             if vertex in cc:
                 return cc
         return None
+
+    def can_force(self, origin: Vertex, destination: Vertex):
+        if origin not in self.filled_vertices: return False
+        neighbors = [v for v in nx.neighbors(self, origin) if not v.is_filled]
+        if len(neighbors) == 1 and destination in neighbors:
+            return True
 
 
 
