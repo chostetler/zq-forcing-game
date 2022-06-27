@@ -21,7 +21,7 @@ class Edge:
             pass
         if self.visible:
             self.render_color = 'black'
-            self.render_width = 2
+            self.render_width = LINE_WIDTH_SMALL
             if self.graph.game.action_state == ActionState.RULE_3_BLUE:
                 if self.origin.component_hovered or self.destination.component_hovered:
                     self.render_color = RULE_3_HOVER_COLOR
@@ -30,7 +30,7 @@ class Edge:
             if self.is_forceable:
                 self.green_value = 100 + 100 * math.sin(2*math.pi*self.animation_counter/700)
                 self.render_color = pygame.color.Color(0, round(self.green_value), 255)
-                self.render_width = 4
+                self.render_width = LINE_WIDTH_LARGE
                 if self.hovered:
                     self.render_color = 'red'
 
