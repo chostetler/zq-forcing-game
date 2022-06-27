@@ -172,6 +172,7 @@ class GameGraph(nx.Graph):
         self.blue_selection = Selection(self)
         self.white_selection = Selection(self)
         self.update()
+        self.update_connected_components()
 
     def induced_subgraph(self, *args):
         graph = nx.Graph(self.edges)
@@ -196,6 +197,8 @@ class GameGraph(nx.Graph):
                 edge.link_graph(self)
                 self.add_edge(edge.origin, edge.destination)
                 self.edge_objects.append(edge)
+        self.update()
+        self.update_connected_components()
 
     def component_is_hovered(self, vertex):
         if vertex not in self.nodes: return False
