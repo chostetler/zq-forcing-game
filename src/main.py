@@ -94,6 +94,7 @@ class Game:
         self.buttons = [self.start_game_button, self.reset_button, self.rule_3_button, self.rule_3_cancel_button, self.rule_3_blue_confirm_button, self.rule_3_white_confirm_button, self.rule_3_done_button]
 
 
+
     def game_loop(self) -> None:
         self.handle_events()
         self.update()
@@ -122,6 +123,9 @@ class Game:
             self.g = gc.GameGraph(parent_game=self)
             self.g.load_from_file(filename)
             self.game_state = GameState.GAME
+            
+            self.blue_first_selection = gc.Selection(self.g)
+            self.white_selection = gc.Selection(self.g)
 
         elif self.game_state == GameState.GAME:
             # This is the game state representing the game being played
@@ -158,15 +162,15 @@ class Game:
                             vertex = clicked_object
                             if not vertex.is_filled:
                                 component = self.g.connected_component(vertex)
-                                if component in self.g.selected_connected_components:
-                                    self.g.selected_connected_components.remove(component)
+                                if component in self.g.blue_selection.components:
+                                    self.g.blue_selection.components.remove(component)
                                 else:
-                                    self.g.selected_connected_components.append(component)
+                                    self.g.blue_selection.components.append(component)
                         if clicked_object is self.rule_3_cancel_button:
                             self.rule_3_cancel_button.click()
                             self.action_state = ActionState.RULE_1
                         if clicked_object is self.rule_3_blue_confirm_button:
-                            if len(self.g.selected_connected_components) > Q:
+                            if len(self.g.blue_selection.components) > Q:
                                 self.action_state = ActionState.RULE_3_WHITE
                                 pass_sound = pygame.mixer.Sound(SOUNDS_PATH / 'whoosh.wav')
                                 pass_sound.play()
@@ -192,7 +196,7 @@ class Game:
                 self.running = False
 
     def update(self) -> None:
-        '''Update positions/states of all game objects'''
+        '''Update game data'''
         for particle in self.particles:
             particle.update_pos(self.dt)
             if not particle.is_alive:
@@ -206,7 +210,7 @@ class Game:
         self.g.update(self.dt)
 
     def render(self) -> None:
-        '''Actually draw all of the game objects'''
+        '''Display things based on our game data'''
         self.DISPLAY_SURF.fill(pygame.color.Color("white"))
         self.hide_all_buttons()
 
@@ -235,7 +239,7 @@ class Game:
                         self.DISPLAY_SURF.blit(token_image, token_image.get_rect(center=token_pos))
 
             elif self.action_state == ActionState.RULE_3_BLUE:
-                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('1. BLUE: select ' + str(Q+1) +' or more components', True, RULE_3_SELECTED_COLOR), (200, 0))
+                if SHOW_RULE_3_INSTRUCTIONS: self.DISPLAY_SURF.blit(self.font.render('1. BLUE: select at least q+1 components (q='+str(Q)+')', True, RULE_3_SELECTED_COLOR), (200, 0))
                 self.rule_3_blue_confirm_button.visible = True
                 self.rule_3_cancel_button.visible = True
             elif self.action_state == ActionState.RULE_3_WHITE:

@@ -76,6 +76,9 @@ class Vertex:
         self.border_color = 'black'
         self.label_font = pygame.font.SysFont("Arial", 20)
 
+    def __str__(self) -> str:
+        return '<Vertex '+str(self.id) + '>'
+
     def render(self, surface: pygame.Surface):
         if not self.visible: return None
         if self.is_filled:
@@ -116,14 +119,15 @@ class Vertex:
         self.is_filled = True
         particle = ClickParticle(self.x, self.y, FILLED_COLOR, self.radius)
         self.graph.game.particles.append(particle)
+        self.graph.update_connected_components()
 
     def update(self, dt=60):
         if self.is_filled and pygame.time.get_ticks() >= self.force_time and not self.has_forced and AUTOFORCE_ENABLED:
             self.graph.do_forces()
             self.has_forced = True
         self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
-        self.component_hovered = self in self.graph.hovered_connected_component
-        self.component_selected = self.graph.connected_component(self) in self.graph.selected_connected_components
+        self.component_hovered = self in self.graph.hovered_connected_component.vertices
+        self.component_selected = self.graph.connected_component(self) in self.graph.blue_selection.components
 
     def can_force(self, destination):
         return self.graph.can_force(self, destination)
@@ -134,7 +138,9 @@ class GameGraph(nx.Graph):
         self.edge_objects = []
         if filename is not None:
             self.load_from_file(filename)
-        self.selected_connected_components = set()
+        self.connected_components = []
+        self.blue_selection = Selection(self)
+        self.white_selection = Selection(self)
         self.update()
 
     def induced_subgraph(self, *args):
@@ -167,15 +173,21 @@ class GameGraph(nx.Graph):
     def update(self, dt=0):
         self.white_vertices = [vertex for vertex in self.nodes if not vertex.is_filled]
         self.filled_vertices = [vertex for vertex in self.nodes if vertex.is_filled]
-        self.nx_graph: nx.Graph = nx.Graph(self.edges)
-        self.connected_components_sets = list(nx.connected_components(nx.induced_subgraph(self.nx_graph, self.white_vertices)))
-        self.hovered_connected_component = {}
-        for cc in self.connected_components_sets:
-            for vertex in cc:
+        self.hovered_connected_component = ConnectedComponent(self, [])
+        for cc in self.connected_components:
+            for vertex in cc.vertices:
                 if vertex.hovered:
                     self.hovered_connected_component = cc
+        # print(self.hovered_connected_component.vertices)
         if self.game.action_state == ActionState.RULE_1:
-            self.selected_connected_components = []
+            self.blue_selection = Selection(self)
+
+    def update_connected_components(self):
+        '''Update the list of connected components of the graph. This should only be run when the color of a vertex changes'''
+        self.update()
+        self.nx_graph: nx.Graph = nx.Graph(self.edges)
+        connected_components_sets = list(nx.connected_components(nx.induced_subgraph(self.nx_graph, self.white_vertices)))
+        self.connected_components = [ConnectedComponent(self, vertices) for vertices in connected_components_sets]
 
     def do_forces(self):
         to_be_forced = []
@@ -186,15 +198,15 @@ class GameGraph(nx.Graph):
         for vertex in to_be_forced:
             vertex.turn_blue()
 
-    def vertices_in_selected_connected_components(self):
-        vertices = []
-        for cc in self.selected_connected_components:
-            vertices += list(cc)
-        return vertices
+    # def vertices_in_selected_connected_components(self):
+    #     vertices = []
+    #     for cc in self.selected_connected_components:
+    #         vertices += list(cc.vertices)
+    #     return vertices
 
     def connected_component(self, vertex: Vertex):
-        for cc in self.connected_components_sets:
-            if vertex in cc:
+        for cc in self.connected_components:
+            if vertex in cc.vertices:
                 return cc
         return None
 
@@ -203,6 +215,23 @@ class GameGraph(nx.Graph):
         neighbors = [v for v in nx.neighbors(self, origin) if not v.is_filled]
         if len(neighbors) == 1 and destination in neighbors:
             return True
+class Selection:
+    '''Represents a selection of white vertex components chosen by Blue or White'''
+    def __init__(self, graph: GameGraph):
+        self.graph = graph
+        self.components = []
+        self.component_representative_vertices = []
+
+    def get_all_vertices(self):
+        pass
+
+    def get_all_edges(self):
+        pass
+        
+class ConnectedComponent:
+    def __init__(self, graph: GameGraph, vertices: Vertex) -> None:
+        self.graph = graph
+        self.vertices = list(vertices)
 
 
 
