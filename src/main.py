@@ -229,12 +229,15 @@ class Game:
             if self.action_state == ActionState.RULE_1:
                 self.rule_3_button.visible = True
             elif self.action_state == ActionState.RULE_3_BLUE:
+                self.DISPLAY_SURF.blit(self.font.render('1. BLUE: select ' + str(Q+1) +' or more components', True, RULE_3_SELECTED_COLOR), (200, 50))
                 self.rule_3_blue_confirm_button.visible = True
                 self.rule_3_cancel_button.visible = True
             elif self.action_state == ActionState.RULE_3_WHITE:
+                self.DISPLAY_SURF.blit(self.font.render('2. WHITE: select at least 1 component', True, RULE_3_SELECTED_COLOR), (200, 50))
                 self.rule_3_white_confirm_button.visible = True
                 self.reset_button.visible = False
             elif self.action_state == ActionState.RULE_3_FORCE:
+                self.DISPLAY_SURF.blit(self.font.render('3. BLUE: perform color forcing', True, RULE_3_SELECTED_COLOR), (200, 50))
                 self.rule_3_done_button.visible = True
 
             for button in self.buttons:
